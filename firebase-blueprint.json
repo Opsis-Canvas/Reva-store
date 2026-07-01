@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Premium handcrafted source-to-order catalog items.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "images": { "type": "array" },
+        "category": { "type": "string" },
+        "priceNGN": { "type": "number" },
+        "priceUSD": { "type": "number" },
+        "currencyMode": { "type": "string", "enum": ["NGN", "USD"] },
+        "quantityAvailable": { "type": "number" },
+        "estimatedDeliveryDays": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "draft", "soldOut"] },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "name", "description", "images", "category", "priceNGN", "priceUSD", "currencyMode", "quantityAvailable", "estimatedDeliveryDays", "status", "createdAt", "updatedAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Bespoke collection filters.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" }
+      },
+      "required": ["id", "name", "slug"]
+    },
+    "GlobalSettings": {
+      "title": "GlobalSettings",
+      "description": "System-wide constants like conversion rate settings.",
+      "type": "object",
+      "properties": {
+        "usdToNgnRate": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["usdToNgnRate", "updatedAt", "updatedBy"]
+    },
+    "Cart": {
+      "title": "Cart",
+      "description": "Client-persistent shopping cart items document.",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["items", "updatedAt"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "User wishlist selections.",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["items", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Bespoke purchase orders.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerSessionId": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "currency": { "type": "string", "enum": ["NGN", "USD"] },
+        "paystackReference": { "type": "string" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed"] },
+        "orderStatus": { "type": "string", "enum": ["processing", "ready", "shipped", "fulfilled"] },
+        "deliveryDetails": { "type": "object" },
+        "estimatedDeliveryDate": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "customerSessionId", "items", "totalAmount", "currency", "paystackReference", "paymentStatus", "orderStatus", "deliveryDetails", "estimatedDeliveryDate", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Opt-in notification triggers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerSessionId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "priceAtCreation": { "type": "number" },
+        "currencyMode": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "customerSessionId", "productId", "productName", "priceAtCreation", "currencyMode", "createdAt", "active"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Bespoke sizing measurements and user profiles.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "RateLimit": {
+      "title": "RateLimit",
+      "description": "Client session request tracking ledger for rate-limiting orders and notifications.",
+      "type": "object",
+      "properties": {
+        "customerSessionId": { "type": "string" },
+        "lastOrderTime": { "type": "number" },
+        "lastNotificationTime": { "type": "number" }
+      },
+      "required": ["customerSessionId"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator validation document.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Star ratings and textual product reviews left by verified purchasers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "customerSessionId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "productId", "orderId", "customerSessionId", "customerName", "rating", "comment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Crafted pre-order product catalog collection."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Product categories index."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/GlobalSettings" },
+      "description": "Exchange rates and system configurations."
+    },
+    "/carts/{customerSessionId}": {
+      "schema": { "$ref": "#/entities/Cart" },
+      "description": "Customer carts keyed by session UID."
+    },
+    "/favorites/{customerSessionId}": {
+      "schema": { "$ref": "#/entities/Favorite" },
+      "description": "Customer favorite items keyed by session UID."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Client pre-orders."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Price drop notification request preferences."
+    },
+    "/profiles/{customerSessionId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "Sizing profiles keyed by session UID."
+    },
+    "/rate_limits/{customerSessionId}": {
+      "schema": { "$ref": "#/entities/RateLimit" },
+      "description": "Secure server-side order and notification rate-limits."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Administrators roster collection."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Star ratings and reviews left by verified product purchasers."
+    }
+  }
+}

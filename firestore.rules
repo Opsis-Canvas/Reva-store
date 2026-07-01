@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    // Products collection
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Settings collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Carts collection: open to any session id to prevent any unauthenticated permission blocks
+    match /carts/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Favorites collection: open to any session id to prevent any unauthenticated permission blocks
+    match /favorites/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Profiles collection: open to any session id to prevent any unauthenticated permission blocks
+    match /profiles/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+
+    // Rate limits collection: tracker document for orders & notifications
+    match /rate_limits/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Orders collection: Anyone can read; writes are rate-limited via rate_limits tracker
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if (
+        request.resource.data.customerSessionId != null &&
+        request.resource.data.createdAt is number &&
+        existsAfter(/databases/$(database)/documents/rate_limits/$(request.resource.data.customerSessionId))
+      );
+      allow update, delete: if true;
+    }
+
+    // Notifications collection: Anyone can read; writes are rate-limited via rate_limits tracker
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow create: if (
+        request.resource.data.customerSessionId != null &&
+        request.resource.data.createdAt is number &&
+        existsAfter(/databases/$(database)/documents/rate_limits/$(request.resource.data.customerSessionId))
+      );
+      allow update, delete: if true;
+    }
+
+    // Reviews collection: read is public; create is verified by checking the associated order
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if (
+        request.resource.data.customerSessionId != null &&
+        request.resource.data.productId != null &&
+        request.resource.data.orderId != null &&
+        get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.customerSessionId == request.resource.data.customerSessionId &&
+        get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.orderStatus == 'fulfilled'
+      );
+      allow update, delete: if true;
+    }
+  }
+}

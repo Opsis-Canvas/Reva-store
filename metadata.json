@@ -1,0 +1,6 @@
+{
+  "name": "Reva",
+  "description": "An elegant, high-fidelity order catalog platform with dual currency (NGN/USD) support, dual authentication for administrators and customers, order tracking, and Paystack integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

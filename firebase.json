@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "database": "ai-studio-preorderplatform-c0ec4f63-7ece-4af3-9ca8-3bb03fc81300",
+    "rules": "firestore.rules"
+  }
+}
