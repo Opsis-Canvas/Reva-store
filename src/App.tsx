@@ -26,10 +26,11 @@ import { Layers, Heart, Compass, Search, ShieldCheck, HelpCircle, Shirt, Baby, S
 export default function App() {
   // Navigation & View controllers
   const [isControlPath, setIsControlPath] = useState(
-    window.location.pathname === '/control' || 
-    window.location.hash === '#control' || 
-    window.location.search.includes('admin=true')
-  );
+  window.location.pathname.endsWith('/control') ||
+  window.location.hash === '#control' ||
+  window.location.search.includes('admin=true')
+);
+
   
   const [activeView, setActiveView] = useState<'landing' | 'catalog' | 'favorites' | 'lookup' | 'profile' | 'refund'>('landing');
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
