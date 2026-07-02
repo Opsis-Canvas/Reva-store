@@ -179,52 +179,50 @@ export default function CompareModal({
   };
 
   return (
-    <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-3xl w-full border border-stone-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="p-6 border-b border-stone-100 flex items-center justify-between bg-stone-50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shadow-sm">
-              <GitCompare className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <h3 className="font-serif text-lg font-bold text-stone-900">Artisan Allocation Comparison</h3>
-              <p className="text-[10px] text-stone-500 leading-normal">Compare specifications, timelines, and pre-order pricing side-by-side.</p>
-            </div>
+    <div className="fixed inset-0 z-55 bg-stone-50 overflow-y-auto flex flex-col w-full h-full font-sans select-none animate-fade-in">
+      
+      {/* Full-Screen Comparison Header */}
+      <div className="sticky top-0 bg-white border-b border-stone-200/80 px-4 py-4 sm:px-6 flex justify-between items-center shrink-0 z-40 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-amber-500 text-stone-950 rounded-xl">
+            <GitCompare className="w-5 h-5" />
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-stone-200 text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Main Content (Side-by-Side) */}
-        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-stone-200/80">
-          <div className="pb-6 md:pb-0">
-            {renderProductColumn(productA, 0)}
-          </div>
-          <div className="pt-6 md:pt-0 md:pl-8">
-            {renderProductColumn(productB, 1)}
+          <div>
+            <h2 className="text-sm font-black text-stone-950 uppercase tracking-widest">Artisan Comparison Workspace</h2>
+            <p className="text-[10px] text-stone-500 font-mono uppercase tracking-wider hidden sm:block">Side-by-Side Detailed Specs</p>
           </div>
         </div>
-
-        {/* Footer info banner */}
-        <div className="p-4 bg-stone-50 border-t border-stone-100 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <span className="text-[10px] text-stone-400 font-mono">
-            * Conversions tracked live using secure escrow exchange rates.
-          </span>
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 font-extrabold uppercase tracking-wider text-[10px] rounded-full transition-all cursor-pointer"
-          >
-            Close Comparison
-          </button>
-        </div>
-
+        <button
+          onClick={onClose}
+          className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-stone-600 hover:text-stone-950 bg-white hover:bg-stone-50 border border-stone-200 hover:border-stone-400 shadow-2xs transition-all active:scale-97 cursor-pointer"
+        >
+          Back to Catalog
+        </button>
       </div>
+
+      {/* Main Content (Side-by-Side) */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-stone-200/80 items-stretch bg-white rounded-3xl border border-stone-250 p-6 my-8 shadow-sm">
+        <div className="pb-6 md:pb-0">
+          {renderProductColumn(productA, 0)}
+        </div>
+        <div className="pt-6 md:pt-0 md:pl-8">
+          {renderProductColumn(productB, 1)}
+        </div>
+      </div>
+
+      {/* Footer info banner */}
+      <div className="bg-white border-t border-stone-200 px-4 py-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3 shrink-0">
+        <span className="text-[10px] text-stone-400 font-mono">
+          * Conversions tracked live using secure escrow exchange rates.
+        </span>
+        <button
+          onClick={onClose}
+          className="px-6 py-2 bg-stone-900 hover:bg-stone-800 text-white font-extrabold uppercase tracking-wider text-[10px] rounded-full transition-all cursor-pointer"
+        >
+          Close Comparison Workspace
+        </button>
+      </div>
+
     </div>
   );
 }

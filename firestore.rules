@@ -30,13 +30,18 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Favorites collection: open to any session id to prevent any unauthenticated permission blocks
+    // Favorites collection: isolated to the customer, preventing admin access
     match /favorites/{customerSessionId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null && request.auth.uid == customerSessionId;
     }
 
     // Profiles collection: open to any session id to prevent any unauthenticated permission blocks
     match /profiles/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Users collection: open to any session id for email saving
+    match /users/{userId} {
       allow read, write: if true;
     }
 
@@ -47,6 +52,11 @@ service cloud.firestore {
 
     // Rate limits collection: tracker document for orders & notifications
     match /rate_limits/{customerSessionId} {
+      allow read, write: if true;
+    }
+
+    // Shares collection
+    match /shares/{shareId} {
       allow read, write: if true;
     }
 

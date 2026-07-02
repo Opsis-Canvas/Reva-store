@@ -16,6 +16,7 @@ export interface Product {
   estimatedDeliveryDays: string; // e.g., "7–14 days"
   status: 'active' | 'draft' | 'soldOut';
   origin: 'China' | 'Italy' | 'Bangkok' | 'Nigeria';
+  originCountry?: string;
   createdAt: number;
   updatedAt: number;
 }

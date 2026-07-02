@@ -3,39 +3,214 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, CreditCard, ShieldCheck, Mail, MapPin, User, Phone, CheckCircle, 
-  Clock, ShoppingBag, Printer, ChevronDown, Building, Truck, Check, HelpCircle 
-} from 'lucide-react';
-import { Product, CartItem } from '../types';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  X,
+  CreditCard,
+  ShieldCheck,
+  Mail,
+  MapPin,
+  User,
+  Phone,
+  CheckCircle,
+  Clock,
+  ShoppingBag,
+  Printer,
+  ChevronDown,
+  Building,
+  Truck,
+  Check,
+  HelpCircle,
+} from "lucide-react";
+import { Product, CartItem } from "../types";
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
   products: Product[];
-  currency: 'NGN' | 'USD';
+  currency: "NGN" | "USD";
   conversionRate: number;
   customerSessionId: string;
   onOrderCreated: (orderId: string) => void;
   clearCart: () => void;
 }
 
-// Representative States and LGAs in Nigeria
-const NIGERIA_REGIONS: Record<string, string[]> = {
-  'Abia': ['Aba North', 'Aba South', 'Arochukwu', 'Bende', 'Ikwuano', 'Isiala Ngwa North', 'Isiala Ngwa South', 'Isuikwuato', 'Obi Ngwa', 'Ohafia', 'Osisioma', 'Ugwunagbo', 'Ukwa East', 'Ukwa West', 'Umuahia North', 'Umuahia South', 'Umunneochi'],
-  'Abuja (FCT)': ['Abaji', 'Bwari', 'Gwagwalada', 'Kuje', 'Kwali', 'Municipal Area Council'],
-  'Anambra': ['Aguata', 'Anambra East', 'Anambra West', 'Anaocha', 'Awka North', 'Awka South', 'Ayamelum', 'Dunukofia', 'Ekwusigo', 'Idemili North', 'Idemili South', 'Ihiala', 'Njikoka', 'Nnewi North', 'Nnewi South', 'Ogbaru', 'Onitsha North', 'Onitsha South', 'Orumba North', 'Orumba South', 'Oyi'],
-  'Enugu': ['Aninri', 'Awgu', 'Enugu East', 'Enugu North', 'Enugu South', 'Ezeagu', 'Igbo Etiti', 'Igbo Eze North', 'Igbo Eze South', 'Isi Uzo', 'Nkanu East', 'Nkanu West', 'Nsukka', 'Oji River', 'Udenu', 'Udi', 'Uzo Uwani'],
-  'Imo': ['Aboh Mbaise', 'Ahiazu Mbaise', 'Ehime Mbano', 'Ezinihitte', 'Ideato North', 'Ideato South', 'Ihitte/Uboma', 'Ikeduru', 'Isiala Mbano', 'Isu', 'Mbaitoli', 'Ngor Okpala', 'Njaba', 'Nkwerre', 'Nwangele', 'Obowo', 'Oguta', 'Ohaji/Egbema', 'Okigwe', 'Orlu', 'Orsu', 'Oru East', 'Oru West', 'Owerri Municipal', 'Owerri North', 'Owerri West', 'Unuimo'],
-  'Lagos': ['Agege', 'Ajeromi-Ifelodun', 'Alimosho', 'Amuwo-Odofin', 'Apapa', 'Badagry', 'Epe', 'Eti Osa', 'Ibeju-Lekki', 'Ifako-Ijaiye', 'Ikeja', 'Ikorodu', 'Kosofe', 'Lagos Island', 'Lagos Mainland', 'Mushin', 'Ojo', 'Oshodi-Isolo', 'Shomolu', 'Surulere'],
-  'Rivers': ['Abua/Odual', 'Ahoada East', 'Ahoada West', 'Akuku Toru', 'Andoni', 'Asari-Toru', 'Bonny', 'Degema', 'Eleme', 'Emohua', 'Etche', 'Gokana', 'Ikwerre', 'Khana', 'Obio/Akpor', 'Ogba/Egbema/Ndoni', 'Ogu/Bolo', 'Okrika', 'Omuma', 'Opobo/Nkoro', 'Oyigbo', 'Port Harcourt', 'Tai']
+// Representative States/Provinces and LGAs/Cities by Country
+const REGIONS_BY_COUNTRY: Record<string, Record<string, string[]>> = {
+  Nigeria: {
+    Abia: [
+      "Aba North",
+      "Aba South",
+      "Arochukwu",
+      "Bende",
+      "Ikwuano",
+      "Isiala Ngwa North",
+      "Isiala Ngwa South",
+      "Isuikwuato",
+      "Obi Ngwa",
+      "Ohafia",
+      "Osisioma",
+      "Ugwunagbo",
+      "Ukwa East",
+      "Ukwa West",
+      "Umuahia North",
+      "Umuahia South",
+      "Umunneochi",
+    ],
+    "Abuja (FCT)": [
+      "Abaji",
+      "Bwari",
+      "Gwagwalada",
+      "Kuje",
+      "Kwali",
+      "Municipal Area Council",
+    ],
+    Anambra: [
+      "Aguata",
+      "Anambra East",
+      "Anambra West",
+      "Anaocha",
+      "Awka North",
+      "Awka South",
+      "Ayamelum",
+      "Dunukofia",
+      "Ekwusigo",
+      "Idemili North",
+      "Idemili South",
+      "Ihiala",
+      "Njikoka",
+      "Nnewi North",
+      "Nnewi South",
+      "Ogbaru",
+      "Onitsha North",
+      "Onitsha South",
+      "Orumba North",
+      "Orumba South",
+      "Oyi",
+    ],
+    Enugu: [
+      "Aninri",
+      "Awgu",
+      "Enugu East",
+      "Enugu North",
+      "Enugu South",
+      "Ezeagu",
+      "Igbo Etiti",
+      "Igbo Eze North",
+      "Igbo Eze South",
+      "Isi Uzo",
+      "Nkanu East",
+      "Nkanu West",
+      "Nsukka",
+      "Oji River",
+      "Udenu",
+      "Udi",
+      "Uzo Uwani",
+    ],
+    Imo: [
+      "Aboh Mbaise",
+      "Ahiazu Mbaise",
+      "Ehime Mbano",
+      "Ezinihitte",
+      "Ideato North",
+      "Ideato South",
+      "Ihitte/Uboma",
+      "Ikeduru",
+      "Isiala Mbano",
+      "Isu",
+      "Mbaitoli",
+      "Ngor Okpala",
+      "Njaba",
+      "Nkwerre",
+      "Nwangele",
+      "Obowo",
+      "Oguta",
+      "Ohaji/Egbema",
+      "Okigwe",
+      "Orlu",
+      "Orsu",
+      "Oru East",
+      "Oru West",
+      "Owerri Municipal",
+      "Owerri North",
+      "Owerri West",
+      "Unuimo",
+    ],
+    Lagos: [
+      "Agege",
+      "Ajeromi-Ifelodun",
+      "Alimosho",
+      "Amuwo-Odofin",
+      "Apapa",
+      "Badagry",
+      "Epe",
+      "Eti Osa",
+      "Ibeju-Lekki",
+      "Ifako-Ijaiye",
+      "Ikeja",
+      "Ikorodu",
+      "Kosofe",
+      "Lagos Island",
+      "Lagos Mainland",
+      "Mushin",
+      "Ojo",
+      "Oshodi-Isolo",
+      "Shomolu",
+      "Surulere",
+    ],
+    Rivers: [
+      "Abua/Odual",
+      "Ahoada East",
+      "Ahoada West",
+      "Akuku Toru",
+      "Andoni",
+      "Asari-Toru",
+      "Bonny",
+      "Degema",
+      "Eleme",
+      "Emohua",
+      "Etche",
+      "Gokana",
+      "Ikwerre",
+      "Khana",
+      "Obio/Akpor",
+      "Ogba/Egbema/Ndoni",
+      "Ogu/Bolo",
+      "Okrika",
+      "Omuma",
+      "Opobo/Nkoro",
+      "Oyigbo",
+      "Port Harcourt",
+      "Tai",
+    ],
+  },
+  China: {
+    Guangdong: ["Shenzhen", "Guangzhou", "Dongguan", "Foshan", "Shantou"],
+    Beijing: ["Chaoyang", "Haidian", "Dongcheng", "Xicheng", "Fengtai"],
+    Shanghai: ["Pudong", "Huangpu", "Xuhui", "Jing'an", "Changning"],
+    Zhejiang: ["Hangzhou", "Ningbo", "Wenzhou", "Shaoxing", "Yiwu"],
+    Sichuan: ["Chengdu", "Mianyang", "Nanchong", "Yibin", "Luzhou"],
+  },
+  Japan: {
+    Tokyo: ["Shinjuku", "Chiyoda", "Minato", "Shibuya", "Chuo"],
+    Osaka: ["Kita", "Chuo", "Naniwa", "Umeda", "Yodogawa"],
+    Kyoto: ["Nakagyo", "Kamigyo", "Shimogyo", "Sakyo", "Fushimi"],
+    Hokkaido: ["Sapporo", "Asahikawa", "Hakodate", "Otaru", "Kushiro"],
+    Fukuoka: ["Hakata", "Chuo", "Sawara", "Minami", "Higashi"],
+  },
+  Italy: {
+    Lazio: ["Rome", "Latina", "Viterbo", "Rieti", "Frosinone"],
+    Lombardy: ["Milan", "Bergamo", "Brescia", "Como", "Monza"],
+    Tuscany: ["Florence", "Pisa", "Siena", "Lucca", "Arezzo"],
+    Veneto: ["Venice", "Verona", "Padua", "Vicenza", "Treviso"],
+    Campania: ["Naples", "Salerno", "Caserta", "Benevento", "Avellino"],
+  },
 };
 
 function generateOrderId(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = 'PR-';
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "PR-";
   for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -55,7 +230,7 @@ function CustomDropdown({
   options,
   onChange,
   placeholder,
-  disabled = false
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -69,7 +244,10 @@ function CustomDropdown({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -79,15 +257,19 @@ function CustomDropdown({
 
   return (
     <div ref={containerRef} className="relative space-y-1 flex-1 min-w-[140px]">
-      <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block pl-1">{label}</label>
+      <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block pl-1">
+        {label}
+      </label>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full bg-white border ${isOpen ? 'border-amber-600 ring-2 ring-amber-600/15' : 'border-stone-300'} disabled:opacity-50 disabled:bg-stone-50 rounded-xl py-3 px-4 text-xs font-medium text-left text-stone-800 flex justify-between items-center transition-all shadow-xs`}
+        className={`w-full bg-white border ${isOpen ? "border-amber-600 ring-2 ring-amber-600/15" : "border-stone-300"} disabled:opacity-50 disabled:bg-stone-50 rounded-xl py-3 px-4 text-xs font-medium text-left text-stone-800 flex justify-between items-center transition-all shadow-xs`}
       >
         <span className="truncate">{value || placeholder}</span>
-        <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform shrink-0 ml-1 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-4 h-4 text-stone-400 transition-transform shrink-0 ml-1 ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -101,9 +283,9 @@ function CustomDropdown({
                 setIsOpen(false);
               }}
               className={`w-full text-left text-xs font-semibold px-3 py-2 rounded-lg transition-all ${
-                value === opt 
-                  ? 'bg-amber-50 text-amber-900 font-bold' 
-                  : 'text-stone-700 hover:bg-stone-50 hover:text-stone-900'
+                value === opt
+                  ? "bg-amber-50 text-amber-900 font-bold"
+                  : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
               }`}
             >
               {opt}
@@ -124,74 +306,132 @@ export default function CheckoutModal({
   conversionRate,
   customerSessionId,
   onOrderCreated,
-  clearCart
+  clearCart,
 }: CheckoutModalProps) {
   // Contact details
   const [formData, setFormData] = useState({
-    name: localStorage.getItem('preorder_checkout_name') || '',
-    email: localStorage.getItem('preorder_checkout_email') || '',
-    phone: localStorage.getItem('preorder_checkout_phone') || ''
+    name: localStorage.getItem("preorder_checkout_name") || "",
+    email: localStorage.getItem("preorder_checkout_email") || "",
+    phone: localStorage.getItem("preorder_checkout_phone") || "",
   });
 
   // Delivery configuration
-  const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'doorstep'>('pickup');
-  const [shippingTier, setShippingTier] = useState<'air' | 'boat'>('air');
-  
+  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "doorstep">(
+    "pickup",
+  );
+  const [shippingTier, setShippingTier] = useState<"air" | "boat">("air");
+
   // Cascading Address states
-  const [country, setCountry] = useState<string>('Nigeria');
-  const [selectedState, setSelectedState] = useState<string>('');
-  const [selectedLga, setSelectedLga] = useState<string>('');
-  const [streetAddress, setStreetAddress] = useState<string>('');
+  const [country, setCountry] = useState<string>("Nigeria");
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedLga, setSelectedLga] = useState<string>("");
+  const [streetAddress, setStreetAddress] = useState<string>("");
+
+  useEffect(() => {
+    const COUNTRIES_WITH_DOORSTEP = ["Nigeria", "China"];
+    if (
+      !COUNTRIES_WITH_DOORSTEP.includes(country) &&
+      deliveryMethod === "doorstep"
+    ) {
+      setDeliveryMethod("pickup");
+    }
+  }, [country, deliveryMethod]);
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPaymentSandbox, setShowPaymentSandbox] = useState(false);
-  const [paymentStep, setPaymentStep] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
+  const [paymentStep, setPaymentStep] = useState<
+    "idle" | "processing" | "success" | "failed"
+  >("idle");
   const [createdOrderRef, setCreatedOrderRef] = useState<any>(null);
 
   if (!isOpen) return null;
 
   // Compute items in pre-order bag
-  const detailedItems = cartItems.map(item => {
-    const product = products.find(p => p.id === item.productId);
-    return { ...item, product };
-  }).filter(item => item.product !== undefined) as any[];
+  const detailedItems = cartItems
+    .map((item) => {
+      const product = products.find((p) => p.id === item.productId);
+      return { ...item, product };
+    })
+    .filter((item) => item.product !== undefined) as any[];
 
   // Subtotal in base pricing currency
   const subtotal = detailedItems.reduce((acc, item) => {
     const p = item.product;
     let itemPrice = 0;
-    
-    if (p.currencyMode === 'NGN') {
-      itemPrice = currency === 'NGN' ? p.priceNGN : p.priceNGN / conversionRate;
+
+    if (p.currencyMode === "NGN") {
+      itemPrice = currency === "NGN" ? p.priceNGN : p.priceNGN / conversionRate;
     } else {
-      itemPrice = currency === 'USD' ? p.priceUSD : p.priceUSD * conversionRate;
+      itemPrice = currency === "USD" ? p.priceUSD : p.priceUSD * conversionRate;
     }
-    
-    return acc + (itemPrice * item.quantity);
+
+    return acc + itemPrice * item.quantity;
   }, 0);
 
   // Delivery surcharge calculation
-  // Pickup station is free. Customers in Nigeria get doorstep for free.
-  // International doorstep: Air is NGN 15,000 / USD 15, Boat is NGN 6,000 / USD 6
+  // Pickup station is free locally.
+  // We group products by origin country to compute multi-origin fees independently.
+  const COUNTRIES_WITH_DOORSTEP = ["Nigeria", "China"];
+  const isDoorstepAvailable = COUNTRIES_WITH_DOORSTEP.includes(country);
+
+  const getDomesticFee = (destCountry: string, curr: "NGN" | "USD") => {
+    return curr === "NGN" ? 7500 : 5;
+  };
+
+  const hasInternationalItems = detailedItems.some((item) => {
+    const originCountry = item.product.originCountry || item.product.origin || "China";
+    return originCountry !== country;
+  });
+
+  const hasDomesticItems = detailedItems.some((item) => {
+    const originCountry = item.product.originCountry || item.product.origin || "China";
+    return originCountry === country;
+  });
+
+  // Multi-Origin Cart Architectural Resolution
+  // We group line items by source country and calculate independent shipping fees per group.
+  const itemsByOrigin: Record<string, any[]> = {};
+  detailedItems.forEach((item) => {
+    const origin = item.product.originCountry || item.product.origin || "China";
+    if (!itemsByOrigin[origin]) {
+      itemsByOrigin[origin] = [];
+    }
+    itemsByOrigin[origin].push(item);
+  });
+
   let deliveryFee = 0;
-  if (deliveryMethod === 'doorstep') {
-    if (country === 'Nigeria') {
-      deliveryFee = 0;
-    } else {
-      if (shippingTier === 'air') {
-        deliveryFee = currency === 'NGN' ? 15000 : 15;
+
+  Object.entries(itemsByOrigin).forEach(([origin, items]) => {
+    const isInternational = origin !== country;
+    let groupFee = 0;
+
+    if (isInternational) {
+      // Sourced from internationally. Calculates independent shipping speed fee per item quantity in this group.
+      const qtyInGroup = items.reduce((sum, item) => sum + item.quantity, 0);
+      if (shippingTier === "air") {
+        const itemAirFee = currency === "NGN" ? 15000 : 15;
+        groupFee += itemAirFee * qtyInGroup;
       } else {
-        deliveryFee = currency === 'NGN' ? 6000 : 6;
+        const itemSeaFee = currency === "NGN" ? 6000 : 6;
+        groupFee += itemSeaFee * qtyInGroup;
       }
     }
-  }
+
+    // If doorstep courier is active, add local doorstep delivery fee for this origin group
+    if (deliveryMethod === "doorstep" && isDoorstepAvailable) {
+      groupFee += getDomesticFee(country, currency);
+    }
+
+    deliveryFee += groupFee;
+  });
+
   const totalAmount = subtotal + deliveryFee;
 
   // Maximum delivery estimate
   let baseDeliveryDays = 14;
-  let baseEstimateString = '14 days';
-  detailedItems.forEach(item => {
+  let baseEstimateString = "14 days";
+  detailedItems.forEach((item) => {
     const d = getMaxDeliveryDays(item.product.estimatedDeliveryDays);
     if (d > baseDeliveryDays) {
       baseDeliveryDays = d;
@@ -199,35 +439,42 @@ export default function CheckoutModal({
     }
   });
 
-  const isBoatSelected = deliveryMethod === 'doorstep' && country !== 'Nigeria' && shippingTier === 'boat';
-  const finalDeliveryDays = isBoatSelected ? (baseDeliveryDays + 14) : baseDeliveryDays;
-  const finalEstimateString = isBoatSelected 
-    ? `${baseDeliveryDays + 14} days (Slower Boat Transit)` 
+  const isBoatSelected =
+    deliveryMethod === "doorstep" &&
+    hasInternationalItems &&
+    shippingTier === "boat";
+  const finalDeliveryDays = isBoatSelected
+    ? baseDeliveryDays + 14
+    : baseDeliveryDays;
+  const finalEstimateString = isBoatSelected
+    ? `${baseDeliveryDays + 14} days (Slower Sea Transit)`
     : baseEstimateString;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: '' }));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    if (!formData.name.trim()) errors.name = 'Full name is required';
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Valid email address is required';
-    if (!formData.phone.trim() || formData.phone.length < 8) errors.phone = 'Valid phone number is required';
-    
-    if (deliveryMethod === 'doorstep') {
-      if (!country) errors.country = 'Please select a country';
-      if (country === 'Nigeria') {
-        if (!selectedState) errors.state = 'Please select a state';
-        if (!selectedLga) errors.lga = 'Please select a local government';
-      }
-      if (!streetAddress.trim()) errors.streetAddress = 'Street address is required';
+    if (!formData.name.trim()) errors.name = "Full name is required";
+    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email))
+      errors.email = "Valid email address is required";
+    if (!formData.phone.trim() || formData.phone.length < 8)
+      errors.phone = "Valid phone number is required";
+
+    if (!country) errors.country = "Please select a country";
+    if (!selectedState) errors.state = "Please select a state/province/region";
+    if (!selectedLga) errors.lga = "Please select a local government/city";
+
+    if (deliveryMethod === "doorstep") {
+      if (!streetAddress.trim())
+        errors.streetAddress = "Street address is required";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -240,33 +487,34 @@ export default function CheckoutModal({
     setIsSubmitting(true);
     try {
       const orderId = generateOrderId();
-      
-      const { db, doc, writeBatch } = await import('../lib/firebase');
+
+      const { db, doc, writeBatch } = await import("../lib/firebase");
 
       // Create snapshot items for the order
-      const snapshotItems = detailedItems.map(item => ({
+      const snapshotItems = detailedItems.map((item) => ({
         productId: item.productId,
         name: item.product.name,
         quantity: item.quantity,
         priceAtPurchase: Math.round(
-          item.product.currencyMode === 'NGN'
-            ? (currency === 'NGN' ? item.product.priceNGN : item.product.priceNGN / conversionRate)
-            : (currency === 'USD' ? item.product.priceUSD : item.product.priceUSD * conversionRate)
+          item.product.currencyMode === "NGN"
+            ? currency === "NGN"
+              ? item.product.priceNGN
+              : item.product.priceNGN / conversionRate
+            : currency === "USD"
+              ? item.product.priceUSD
+              : item.product.priceUSD * conversionRate,
         ),
-        currency: currency
+        currency: currency,
       }));
 
       // Determine address details
-      let finalAddress = 'Pickup Station Allocation';
-      if (deliveryMethod === 'doorstep') {
-        if (country === 'Nigeria') {
-          finalAddress = `${streetAddress.trim()}, ${selectedLga} LGA, ${selectedState} State, ${country}`;
-        } else {
-          finalAddress = `${streetAddress.trim()}, ${country}`;
-        }
+      let finalAddress = "Pickup Station Allocation";
+      if (deliveryMethod === "doorstep") {
+        finalAddress = `${streetAddress.trim()}, ${selectedLga}, ${selectedState}, ${country}`;
       }
 
-      const estimatedDeliveryMs = Date.now() + (finalDeliveryDays * 24 * 60 * 60 * 1000);
+      const estimatedDeliveryMs =
+        Date.now() + finalDeliveryDays * 24 * 60 * 60 * 1000;
       const currentTimestamp = Date.now();
 
       const orderData = {
@@ -275,9 +523,9 @@ export default function CheckoutModal({
         items: snapshotItems,
         totalAmount: Math.round(totalAmount),
         currency: currency,
-        paystackReference: '',
-        paymentStatus: 'pending',
-        orderStatus: 'processing',
+        paystackReference: "",
+        paymentStatus: "pending",
+        orderStatus: "processing",
         deliveryDetails: {
           name: formData.name,
           phone: formData.phone,
@@ -286,29 +534,33 @@ export default function CheckoutModal({
           deliveryMethod: deliveryMethod,
           state: selectedState || null,
           lga: selectedLga || null,
-          country: country
+          country: country,
         },
         estimatedDeliveryDate: estimatedDeliveryMs,
-        createdAt: currentTimestamp
+        createdAt: currentTimestamp,
       };
 
       // Store in firestore under "orders" and "rate_limits" atomically
       const batch = writeBatch(db);
-      const orderRef = doc(db, 'orders', orderId);
-      const rateLimitRef = doc(db, 'rate_limits', customerSessionId);
+      const orderRef = doc(db, "orders", orderId);
+      const rateLimitRef = doc(db, "rate_limits", customerSessionId);
 
       batch.set(orderRef, orderData);
-      batch.set(rateLimitRef, {
-        customerSessionId: customerSessionId,
-        lastOrderTime: currentTimestamp
-      }, { merge: true });
+      batch.set(
+        rateLimitRef,
+        {
+          customerSessionId: customerSessionId,
+          lastOrderTime: currentTimestamp,
+        },
+        { merge: true },
+      );
 
       // Save client profile details in localStorage to persist preferences
-      localStorage.setItem('preorder_checkout_name', formData.name);
-      localStorage.setItem('preorder_checkout_email', formData.email);
-      localStorage.setItem('preorder_checkout_phone', formData.phone);
-      if (deliveryMethod === 'doorstep') {
-        localStorage.setItem('preorder_checkout_address', finalAddress);
+      localStorage.setItem("preorder_checkout_name", formData.name);
+      localStorage.setItem("preorder_checkout_email", formData.email);
+      localStorage.setItem("preorder_checkout_phone", formData.phone);
+      if (deliveryMethod === "doorstep") {
+        localStorage.setItem("preorder_checkout_address", finalAddress);
       }
 
       await batch.commit();
@@ -316,66 +568,71 @@ export default function CheckoutModal({
       setCreatedOrderRef(orderData);
       setShowPaymentSandbox(true);
     } catch (err) {
-      console.error('Failed to register order in Firestore:', err);
+      console.error("Failed to register order in Firestore:", err);
       try {
-        const { handleFirestoreError, OperationType } = await import('../lib/firebase');
+        const { handleFirestoreError, OperationType } =
+          await import("../lib/firebase");
         handleFirestoreError(err, OperationType.WRITE, `orders`);
       } catch (inner) {
-        console.error('Formatted Error:', inner);
+        console.error("Formatted Error:", inner);
       }
-      alert('An error occurred while placing your pre-order. Please try again.');
+      alert(
+        "An error occurred while placing your pre-order. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // Simulated payment with server-side validation
-  const handleSimulatedPayment = async (status: 'success' | 'fail') => {
-    setPaymentStep('processing');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  const handleSimulatedPayment = async (status: "success" | "fail") => {
+    setPaymentStep("processing");
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    if (status === 'fail') {
-      setPaymentStep('failed');
+    if (status === "fail") {
+      setPaymentStep("failed");
       return;
     }
 
     const paystackRef = `PR-PAY-${Math.floor(Math.random() * 1000000000)}`;
 
     try {
-      const response = await fetch('/api/verify-payment', {
-        method: 'POST',
+      const response = await fetch("/api/verify-payment", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           orderId: createdOrderRef.id,
           paystackReference: paystackRef,
           amountPaid: createdOrderRef.totalAmount,
-          currency: createdOrderRef.currency
-        })
+          currency: createdOrderRef.currency,
+        }),
       });
 
       const verificationResult = await response.json();
 
       if (verificationResult.success) {
-        setPaymentStep('success');
+        setPaymentStep("success");
         clearCart();
         onOrderCreated(createdOrderRef.id);
       } else {
-        console.error('Server verification failed:', verificationResult.message);
-        setPaymentStep('failed');
+        console.error(
+          "Server verification failed:",
+          verificationResult.message,
+        );
+        setPaymentStep("failed");
       }
     } catch (err) {
-      console.error('Network error during verification:', err);
-      setPaymentStep('failed');
+      console.error("Network error during verification:", err);
+      setPaymentStep("failed");
     }
   };
 
   return (
     <>
-      {/* Full-Screen Confirm Pre-order Overlay View */}
+      {/* Full-Screen Confirm Order Overlay View */}
       <div className="fixed inset-0 z-50 bg-stone-50 overflow-y-auto flex flex-col print:hidden animate-fade-in font-sans">
-        
         {/* Top bar header */}
         <div className="sticky top-0 bg-white border-b border-stone-200/80 px-4 py-4 sm:px-6 flex justify-between items-center shrink-0 z-40 shadow-xs">
           <div className="flex items-center gap-3">
@@ -383,8 +640,12 @@ export default function CheckoutModal({
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-sm font-black text-stone-950 uppercase tracking-widest">Confirm Pre-Order</h1>
-              <p className="text-[10px] text-stone-500 font-mono uppercase tracking-wider hidden sm:block">Step 2 of 2: Allocation Specifications</p>
+              <h1 className="text-sm font-black text-stone-950 uppercase tracking-widest">
+                Confirm Order
+              </h1>
+              <p className="text-[10px] text-stone-500 font-mono uppercase tracking-wider hidden sm:block">
+                Step 2 of 2: Allocation Specifications
+              </p>
             </div>
           </div>
           <button
@@ -397,88 +658,23 @@ export default function CheckoutModal({
 
         {/* Outer content container */}
         <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
           {/* Left Panel: Delivery Option & Cascaded address Forms (7 Columns) */}
           <div className="lg:col-span-7 space-y-6">
-            
-            {/* Delivery Method Choice selector cards */}
-            <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-4">
-              <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
-                1. Select Delivery Preference
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* Option A: Pickup station */}
-                <div 
-                  onClick={() => {
-                    setDeliveryMethod('pickup');
-                    // Reset address cascading values if toggled off
-                    setCountry('Nigeria');
-                    setSelectedState('');
-                    setSelectedLga('');
-                    setStreetAddress('');
-                  }}
-                  className={`border rounded-2xl p-4 flex gap-3.5 items-start cursor-pointer transition-all select-none ${
-                    deliveryMethod === 'pickup' 
-                      ? 'border-amber-600 bg-amber-500/5 ring-1 ring-amber-600' 
-                      : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/50'
-                  }`}
-                >
-                  <div className={`p-2 rounded-xl mt-0.5 ${deliveryMethod === 'pickup' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-500'}`}>
-                    <Building className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-stone-900">Pickup Station</span>
-                      <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 font-extrabold rounded">FREE</span>
-                    </div>
-                    <p className="text-[10px] sm:text-xs text-stone-500 leading-normal">
-                      We will call you to coordinate the nearest custom regional collection point once crafting completes.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Option B: Doorstep Delivery */}
-                <div 
-                  onClick={() => setDeliveryMethod('doorstep')}
-                  className={`border rounded-2xl p-4 flex gap-3.5 items-start cursor-pointer transition-all select-none ${
-                    deliveryMethod === 'doorstep' 
-                      ? 'border-amber-600 bg-amber-500/5 ring-1 ring-amber-600' 
-                      : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/50'
-                  }`}
-                >
-                  <div className={`p-2 rounded-xl mt-0.5 ${deliveryMethod === 'doorstep' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-500'}`}>
-                    <Truck className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-stone-900">Doorstep Courier</span>
-                      <span className="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-800 border border-stone-200 font-extrabold rounded">
-                        {currency === 'NGN' ? '₦7,500' : '$5'}
-                      </span>
-                    </div>
-                    <p className="text-[10px] sm:text-xs text-stone-500 leading-normal">
-                      Insured freight directly to your home, office, or studio. Requires full address lookup specifications.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Paystack simulator vs main input form */}
             {!showPaymentSandbox ? (
               <form onSubmit={handleProceedToPayment} className="space-y-6">
-                
                 {/* Contact Information Card */}
                 <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-4">
                   <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
-                    2. Contact Information
+                    1. Contact Information
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Name */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">Full Name</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
+                        Full Name
+                      </label>
                       <div className="relative">
                         <input
                           type="text"
@@ -490,12 +686,18 @@ export default function CheckoutModal({
                         />
                         <User className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
                       </div>
-                      {formErrors.name && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.name}</span>}
+                      {formErrors.name && (
+                        <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                          {formErrors.name}
+                        </span>
+                      )}
                     </div>
 
                     {/* Email */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">Email Address</label>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
+                        Email Address
+                      </label>
                       <div className="relative">
                         <input
                           type="email"
@@ -507,13 +709,19 @@ export default function CheckoutModal({
                         />
                         <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
                       </div>
-                      {formErrors.email && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.email}</span>}
+                      {formErrors.email && (
+                        <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                          {formErrors.email}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Phone */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">Phone Number (Pre-Order Updates)</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
+                      Phone Number (Order Updates)
+                    </label>
                     <div className="relative">
                       <input
                         type="tel"
@@ -525,131 +733,323 @@ export default function CheckoutModal({
                       />
                       <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
                     </div>
-                    {formErrors.phone && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.phone}</span>}
+                    {formErrors.phone && (
+                      <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                        {formErrors.phone}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Address specification card (Only visible if doorstep delivery chosen) */}
-                {deliveryMethod === 'doorstep' && (
-                  <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-4 animate-fade-in">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
-                      3. Premium Shipping Location Sourcing
-                    </h2>
+                {/* 2. Shipping Location & Address Details Card */}
+                <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-4">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
+                    2. Shipping Location &amp; Address Details
+                  </h2>
 
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      {/* Country dropdown */}
-                      <CustomDropdown 
-                        label="Country"
-                        value={country}
-                        options={['Nigeria', 'Other International']}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-30">
+                    {/* Country dropdown */}
+                    <CustomDropdown
+                      label="Country"
+                      value={country}
+                      options={["Nigeria", "China", "Japan", "Italy"]}
+                      onChange={(val) => {
+                        setCountry(val);
+                        setSelectedState("");
+                        setSelectedLga("");
+                      }}
+                      placeholder="Select Country"
+                    />
+
+                    {/* State drop-down - populated dynamically for all countries */}
+                    {country && REGIONS_BY_COUNTRY[country] ? (
+                      <CustomDropdown
+                        label="State / Province / Region"
+                        value={selectedState}
+                        options={Object.keys(REGIONS_BY_COUNTRY[country])}
                         onChange={(val) => {
-                          setCountry(val);
-                          setSelectedState('');
-                          setSelectedLga('');
+                          setSelectedState(val);
+                          setSelectedLga("");
                         }}
-                        placeholder="Select Country"
+                        placeholder="Select State/Province"
                       />
-
-                      {/* State drop-down - populated if Nigeria */}
-                      {country === 'Nigeria' && (
-                        <CustomDropdown 
-                          label="State"
-                          value={selectedState}
-                          options={Object.keys(NIGERIA_REGIONS)}
-                          onChange={(val) => {
-                            setSelectedState(val);
-                            setSelectedLga('');
-                          }}
-                          placeholder="Select Nigerian State"
-                        />
-                      )}
-                    </div>
-
-                    {formErrors.state && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.state}</span>}
-
-                    {/* Local Government Dropdown - populated based on state selection */}
-                    {country === 'Nigeria' && selectedState && (
-                      <div className="animate-fade-in">
-                        <CustomDropdown 
-                          label="Local Government Area (LGA)"
-                          value={selectedLga}
-                          options={NIGERIA_REGIONS[selectedState] || []}
-                          onChange={(val) => setSelectedLga(val)}
-                          placeholder={`Select LGA in ${selectedState}`}
-                        />
-                        {formErrors.lga && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.lga}</span>}
-                      </div>
+                    ) : (
+                      <div className="hidden md:block" />
                     )}
 
-                    {/* Street details input */}
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">Street Address Details</label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={streetAddress}
-                          onChange={(e) => setStreetAddress(e.target.value)}
-                          placeholder="House Number, Street Name, Estate/Suite Info"
-                          className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-3 pl-10 pr-4 text-xs font-medium focus:outline-none focus:border-stone-400 focus:bg-white transition-all shadow-2xs"
-                        />
-                        <MapPin className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
-                      </div>
-                      {formErrors.streetAddress && <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">{formErrors.streetAddress}</span>}
+                    {/* Local Government / City Area Dropdown - populated dynamically */}
+                    {country &&
+                    selectedState &&
+                    REGIONS_BY_COUNTRY[country]?.[selectedState] ? (
+                      <CustomDropdown
+                        label="City / LGA / Subdivision"
+                        value={selectedLga}
+                        options={
+                          REGIONS_BY_COUNTRY[country][selectedState] || []
+                        }
+                        onChange={(val) => setSelectedLga(val)}
+                        placeholder={`Select City/Area in ${selectedState}`}
+                      />
+                    ) : (
+                      <div className="hidden md:block" />
+                    )}
+                  </div>
+
+                  {formErrors.state && (
+                    <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                      {formErrors.state}
+                    </span>
+                  )}
+                  {formErrors.lga && (
+                    <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                      {formErrors.lga}
+                    </span>
+                  )}
+
+                  {/* Street details input - ALWAYS visible and open by default */}
+                  <div className="space-y-1.5 pt-4 border-t border-stone-150 mt-4 relative z-10">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
+                      Street Address Details
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={streetAddress}
+                        onChange={(e) => setStreetAddress(e.target.value)}
+                        placeholder="House Number, Street Name, Estate/Suite Info"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-3 pl-10 pr-4 text-xs font-medium focus:outline-none focus:border-stone-400 focus:bg-white transition-all shadow-2xs"
+                      />
+                      <MapPin className="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" />
                     </div>
+                    {formErrors.streetAddress && (
+                      <span className="text-[9px] text-red-500 font-bold uppercase block pl-1">
+                        {formErrors.streetAddress}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                    {/* Shipping Speed (Air vs Boat) Option for international doorstep */}
-                    {country !== 'Nigeria' && (
-                      <div className="space-y-2 pt-4 border-t border-stone-150 mt-4 animate-fade-in">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
-                          Shipping Method &amp; Delivery Speed
-                        </label>
-                        <div className="grid grid-cols-2 gap-3.5">
-                          {/* Option A: Air */}
-                          <div 
-                            onClick={() => setShippingTier('air')}
-                            className={`border rounded-2xl p-4 flex gap-3 items-start cursor-pointer transition-all select-none ${
-                              shippingTier === 'air' 
-                                ? 'border-amber-600 bg-amber-500/5 ring-1 ring-amber-600' 
-                                : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
-                            }`}
-                          >
-                            <div className="p-2 rounded-xl bg-amber-100 text-amber-800 mt-0.5 shrink-0">
-                              <Truck className="w-4 h-4" />
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-[11px] font-black uppercase tracking-wider text-stone-900 block">Air Freight</span>
-                              <span className="text-[10px] font-mono text-amber-700 font-extrabold block">
-                                {currency === 'NGN' ? '₦15,000' : '$15'}
-                              </span>
-                              <span className="text-[9px] text-stone-400 block font-medium">Standard estimated delivery window</span>
-                            </div>
+                {/* 3. Select Delivery Preference Card */}
+                <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-6">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
+                    3. Select Delivery Preference
+                  </h2>
+
+                  {/* Shipping Speed (Air vs Sea) Option for international route - Exposed independently whenever hasInternationalItems is true */}
+                  {hasInternationalItems ? (
+                    <div className="space-y-2 pb-4 border-b border-stone-150 mb-4 animate-fade-in text-left">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-stone-400 block pl-1">
+                        Select International Transit Speed (Air or Sea)
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {/* Option A: Air */}
+                        <div
+                          onClick={() => setShippingTier("air")}
+                          className={`border rounded-2xl p-4 flex gap-3 items-start cursor-pointer transition-all select-none text-left ${
+                            shippingTier === "air"
+                              ? "border-amber-600 bg-amber-500/5 ring-1 ring-amber-600"
+                              : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                          }`}
+                        >
+                          <div className="p-2 rounded-xl bg-amber-100 text-amber-800 mt-0.5 shrink-0">
+                            <Truck className="w-4 h-4" />
                           </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-stone-900 block font-sans">
+                              Air Shipping
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-700 font-extrabold block">
+                              {currency === "NGN"
+                                ? `₦${detailedItems
+                                    .reduce((acc, item) => {
+                                      const originCountry =
+                                        item.product.originCountry ||
+                                        item.product.origin || "China";
+                                      return originCountry !== country
+                                        ? acc + 15000 * item.quantity
+                                        : acc;
+                                    }, 0)
+                                    .toLocaleString()}`
+                                : `$${detailedItems
+                                    .reduce((acc, item) => {
+                                      const originCountry =
+                                        item.product.originCountry ||
+                                        item.product.origin || "China";
+                                      return originCountry !== country
+                                        ? acc + 15 * item.quantity
+                                        : acc;
+                                    }, 0)
+                                    .toLocaleString()}`}
+                            </span>
+                            <span className="text-[9px] text-stone-400 block font-medium leading-normal">
+                              Air Transit: {baseEstimateString} wait time
+                            </span>
+                          </div>
+                        </div>
 
-                          {/* Option B: Boat */}
-                          <div 
-                            onClick={() => setShippingTier('boat')}
-                            className={`border rounded-2xl p-4 flex gap-3 items-start cursor-pointer transition-all select-none ${
-                              shippingTier === 'boat' 
-                                ? 'border-amber-600 bg-amber-500/5 ring-1 ring-amber-600' 
-                                : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
-                            }`}
-                          >
-                            <div className="p-2 rounded-xl bg-blue-100 text-blue-800 mt-0.5 shrink-0">
-                              <Building className="w-4 h-4" />
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-[11px] font-black uppercase tracking-wider text-stone-900 block">Ocean / Boat</span>
-                              <span className="text-[10px] font-mono text-blue-700 font-extrabold block">
-                                {currency === 'NGN' ? '₦6,000' : '$6'}
-                              </span>
-                              <span className="text-[9px] text-stone-400 block font-medium">Eco-saving slower transit (+14 days)</span>
-                            </div>
+                        {/* Option B: Sea */}
+                        <div
+                          onClick={() => setShippingTier("boat")}
+                          className={`border rounded-2xl p-4 flex gap-3 items-start cursor-pointer transition-all select-none text-left ${
+                            shippingTier === "boat"
+                              ? "border-amber-600 bg-amber-500/5 ring-1 ring-amber-600"
+                              : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                          }`}
+                        >
+                          <div className="p-2 rounded-xl bg-blue-100 text-blue-800 mt-0.5 shrink-0">
+                            <Building className="w-4 h-4" />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-stone-900 block font-sans">
+                              Sea Shipping
+                            </span>
+                            <span className="text-[10px] font-mono text-blue-700 font-extrabold block">
+                              {currency === "NGN"
+                                ? `₦${detailedItems
+                                    .reduce((acc, item) => {
+                                      const originCountry =
+                                        item.product.originCountry ||
+                                        item.product.origin || "China";
+                                      return originCountry !== country
+                                        ? acc + 6000 * item.quantity
+                                        : acc;
+                                    }, 0)
+                                    .toLocaleString()}`
+                                : `$${detailedItems
+                                    .reduce((acc, item) => {
+                                      const originCountry =
+                                        item.product.originCountry ||
+                                        item.product.origin || "China";
+                                      return originCountry !== country
+                                        ? acc + 6 * item.quantity
+                                        : acc;
+                                    }, 0)
+                                    .toLocaleString()}`}
+                            </span>
+                            <span className="text-[9px] text-stone-400 block font-medium leading-normal">
+                              Sea Transit: {finalDeliveryDays} days (Slower Sea Transit)
+                            </span>
                           </div>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  ) : (
+                    /* Domestic Routing - Hides and disables selectors, shows bypass badge */
+                    <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl flex items-center gap-3 mb-4 select-none">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <div className="text-xs text-stone-600">
+                        <span className="font-bold text-stone-900">Bypassing International Transit:</span> All items sourced locally inside {country}. No international shipping surcharge is applicable.
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Option A: Pickup station */}
+                    <div
+                      onClick={() => {
+                        setDeliveryMethod("pickup");
+                      }}
+                      className={`border rounded-2xl p-4 flex gap-3.5 items-start cursor-pointer transition-all select-none text-left ${
+                        deliveryMethod === "pickup"
+                          ? "border-amber-600 bg-amber-500/5 ring-1 ring-amber-600"
+                          : "border-stone-200 hover:border-stone-300 hover:bg-stone-50/50"
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded-xl mt-0.5 ${deliveryMethod === "pickup" ? "bg-amber-100 text-amber-800" : "bg-stone-100 text-stone-500"}`}
+                      >
+                        <Building className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 justify-between">
+                          <span className="text-xs font-black uppercase tracking-wider text-stone-900">
+                            Pickup Station
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 font-extrabold rounded">
+                            FREE
+                          </span>
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-stone-500 leading-normal">
+                          We will call you to coordinate the nearest custom regional
+                          collection point once crafting completes.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Option B: Doorstep Delivery */}
+                    <div
+                      onClick={() => {
+                        if (isDoorstepAvailable) {
+                          setDeliveryMethod("doorstep");
+                        }
+                      }}
+                      className={`border rounded-2xl p-4 flex gap-3.5 items-start transition-all select-none text-left ${
+                        !isDoorstepAvailable
+                          ? "opacity-50 cursor-not-allowed bg-stone-50 border-stone-200"
+                          : deliveryMethod === "doorstep"
+                            ? "border-amber-600 bg-amber-500/5 ring-1 ring-amber-600 cursor-pointer"
+                            : "border-stone-200 hover:border-stone-300 hover:bg-stone-50/50 cursor-pointer"
+                      }`}
+                    >
+                      <div
+                        className={`p-2 rounded-xl mt-0.5 ${
+                          !isDoorstepAvailable
+                            ? "bg-stone-150 text-stone-400"
+                            : deliveryMethod === "doorstep"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-stone-100 text-stone-500"
+                        }`}
+                      >
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1 w-full">
+                        <div className="flex items-center gap-1.5 justify-between">
+                          <span
+                            className={`text-xs font-black uppercase tracking-wider ${!isDoorstepAvailable ? "text-stone-400" : "text-stone-900"}`}
+                          >
+                            Doorstep Courier
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-800 border border-stone-200 font-extrabold rounded">
+                            {!isDoorstepAvailable
+                              ? "Unavailable"
+                              : currency === "NGN"
+                                ? `₦${getDomesticFee(country, currency).toLocaleString()}`
+                                : `$${getDomesticFee(country, currency)}`}
+                          </span>
+                        </div>
+                        <p
+                          className={`text-[10px] sm:text-xs leading-normal ${!isDoorstepAvailable ? "text-red-500 font-semibold" : "text-stone-500"}`}
+                        >
+                          {!isDoorstepAvailable
+                            ? "Doorstep carrier unavailable in this region"
+                            : "Normal shipping to your doorstep with direct courier delivery."}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                )}
+
+                  {/* Standard Domestic Surcharge Badge when doorstep selected and only domestic items are in cart */}
+                  {deliveryMethod === "doorstep" && !hasInternationalItems && (
+                    <div className="p-4 bg-emerald-500/5 border border-emerald-600/10 rounded-2xl flex items-start gap-3 mt-4 animate-fade-in text-left">
+                      <div className="p-1.5 bg-emerald-100 text-emerald-800 rounded-lg shrink-0 mt-0.5">
+                        <Check className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-950 block">
+                          Standard Domestic Delivery Surcharge Applied
+                        </span>
+                        <span className="text-[9px] text-stone-500 block font-medium leading-normal">
+                          All items originate within {country}. Flat
+                          domestic rate of{" "}
+                          {currency === "NGN"
+                            ? `₦${getDomesticFee(country, currency).toLocaleString()}`
+                            : `$${getDomesticFee(country, currency)}`}{" "}
+                          is applied.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Main Submit Button */}
                 <button
@@ -657,19 +1057,20 @@ export default function CheckoutModal({
                   disabled={isSubmitting}
                   className="w-full py-4 bg-stone-950 hover:bg-stone-850 disabled:bg-stone-400 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-md transition-all active:scale-99 hover:shadow-lg cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? 'Registering Pre-Order...' : 'Proceed to Paystack Sandbox'}
+                  {isSubmitting
+                    ? "Registering Order..."
+                    : "Proceed to Paystack Sandbox"}
                 </button>
               </form>
             ) : (
               /* Paystack sandbox container */
               <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-sm space-y-6">
-                
-                {paymentStep === 'idle' && (
+                {paymentStep === "idle" && (
                   <div className="space-y-6 text-center py-4">
                     <div className="mx-auto w-14 h-14 bg-amber-500/10 flex items-center justify-center rounded-full text-amber-700 border border-amber-200">
                       <CreditCard className="w-6 h-6" />
                     </div>
-                    
+
                     <div className="space-y-1">
                       <span className="text-[10px] bg-amber-500/15 border border-amber-500/25 px-3 py-1 rounded-full text-amber-900 font-black uppercase tracking-widest">
                         Paystack Simulation Gateway
@@ -678,27 +1079,99 @@ export default function CheckoutModal({
                         Simulate Secure Checkout
                       </h3>
                       <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                        This simulates Paystack&apos;s transaction interface. Select a successful transaction to verify order verification logic server-side.
+                        This simulates Paystack&apos;s transaction interface.
+                        Select a successful transaction to verify order
+                        verification logic server-side.
                       </p>
                     </div>
 
                     <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-left space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Order ID:</span>
-                        <span className="font-mono font-black text-stone-900">{createdOrderRef?.id}</span>
+                        <span className="text-stone-400 font-medium">
+                          Order ID:
+                        </span>
+                        <span className="font-mono font-black text-stone-900">
+                          {createdOrderRef?.id}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Recipient:</span>
-                        <span className="text-stone-900 font-semibold">{createdOrderRef?.deliveryDetails.name}</span>
+                        <span className="text-stone-400 font-medium">
+                          Recipient:
+                        </span>
+                        <span className="text-stone-900 font-semibold">
+                          {createdOrderRef?.deliveryDetails.name}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Contact:</span>
-                        <span className="text-stone-900 font-mono">{createdOrderRef?.deliveryDetails.email}</span>
+                        <span className="text-stone-400 font-medium">
+                          Contact:
+                        </span>
+                        <span className="text-stone-900 font-mono">
+                          {createdOrderRef?.deliveryDetails.email}
+                        </span>
                       </div>
+
+                      {createdOrderRef?.deliveryDetails.deliveryMethod ===
+                      "doorstep" ? (
+                        <>
+                          <div className="flex justify-between border-t border-stone-150 pt-1.5 mt-1.5">
+                            <span className="text-stone-400 font-medium">
+                              Country:
+                            </span>
+                            <span className="text-stone-900 font-bold">
+                              {createdOrderRef?.deliveryDetails.country}
+                            </span>
+                          </div>
+                          {createdOrderRef?.deliveryDetails.state && (
+                            <div className="flex justify-between">
+                              <span className="text-stone-400 font-medium">
+                                State / Province:
+                              </span>
+                              <span className="text-stone-900 font-bold">
+                                {createdOrderRef?.deliveryDetails.state}
+                              </span>
+                            </div>
+                          )}
+                          {createdOrderRef?.deliveryDetails.lga && (
+                            <div className="flex justify-between">
+                              <span className="text-stone-400 font-medium">
+                                City / LGA / Area:
+                              </span>
+                              <span className="text-stone-900 font-bold">
+                                {createdOrderRef?.deliveryDetails.lga}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-stone-400 font-medium">
+                              Street Address:
+                            </span>
+                            <span
+                              className="text-stone-900 font-medium truncate max-w-[200px]"
+                              title={createdOrderRef?.deliveryDetails.address}
+                            >
+                              {createdOrderRef?.deliveryDetails.address?.split(
+                                ",",
+                              )?.[0] ||
+                                createdOrderRef?.deliveryDetails.address}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between border-t border-stone-150 pt-1.5 mt-1.5">
+                          <span className="text-stone-400 font-medium">
+                            Fulfillment Method:
+                          </span>
+                          <span className="text-amber-800 font-black uppercase text-[10px]">
+                            Pickup Station Sourcing
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex justify-between font-bold pt-2 border-t border-stone-200">
                         <span className="text-stone-800">Total Price:</span>
                         <span className="text-stone-950 text-sm font-black">
-                          {createdOrderRef?.currency === 'NGN' ? '₦' : '$'}
+                          {createdOrderRef?.currency === "NGN" ? "₦" : "$"}
                           {createdOrderRef?.totalAmount.toLocaleString()}
                         </span>
                       </div>
@@ -706,13 +1179,13 @@ export default function CheckoutModal({
 
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <button
-                        onClick={() => handleSimulatedPayment('success')}
+                        onClick={() => handleSimulatedPayment("success")}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
                       >
                         Simulate Success
                       </button>
                       <button
-                        onClick={() => handleSimulatedPayment('fail')}
+                        onClick={() => handleSimulatedPayment("fail")}
                         className="bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer"
                       >
                         Simulate Failure
@@ -721,7 +1194,7 @@ export default function CheckoutModal({
                   </div>
                 )}
 
-                {paymentStep === 'processing' && (
+                {paymentStep === "processing" && (
                   <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
                     <div className="w-10 h-10 rounded-full border-4 border-amber-600 border-t-transparent animate-spin" />
                     <div className="space-y-1">
@@ -729,13 +1202,14 @@ export default function CheckoutModal({
                         Authorizing on Paystack
                       </h4>
                       <p className="text-xs text-stone-500 font-sans">
-                        Calling server-side verification hook `/api/verify-payment`...
+                        Calling server-side verification hook
+                        `/api/verify-payment`...
                       </p>
                     </div>
                   </div>
                 )}
 
-                {paymentStep === 'success' && (
+                {paymentStep === "success" && (
                   <div className="text-center py-8 space-y-6">
                     <div className="mx-auto w-14 h-14 bg-emerald-500/10 flex items-center justify-center rounded-full text-emerald-600 border border-emerald-200">
                       <CheckCircle className="w-8 h-8 animate-bounce" />
@@ -746,27 +1220,47 @@ export default function CheckoutModal({
                         Order Reserved!
                       </h4>
                       <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                        Payment verified successfully by server. Your customized order is logged in Firestore database and is currently marked as <span className="text-amber-700 font-bold uppercase">Processing</span>.
+                        Payment verified successfully by server. Your customized
+                        order is logged in Firestore database and is currently
+                        marked as{" "}
+                        <span className="text-amber-700 font-bold uppercase">
+                          Processing
+                        </span>
+                        .
                       </p>
                     </div>
 
                     <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-left space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Assigned Order ID:</span>
-                        <span className="font-mono font-black text-amber-800">{createdOrderRef?.id}</span>
+                        <span className="text-stone-400 font-medium">
+                          Assigned Order ID:
+                        </span>
+                        <span className="font-mono font-black text-amber-800">
+                          {createdOrderRef?.id}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Recipient Address:</span>
-                        <span className="font-medium text-stone-950 truncate max-w-[200px]">{createdOrderRef?.deliveryDetails.address}</span>
+                        <span className="text-stone-400 font-medium">
+                          Recipient Address:
+                        </span>
+                        <span className="font-medium text-stone-950 truncate max-w-[200px]">
+                          {createdOrderRef?.deliveryDetails.address}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">Estimated Delivery:</span>
-                        <span className="font-bold text-stone-950">{finalEstimateString}</span>
+                        <span className="text-stone-400 font-medium">
+                          Estimated Delivery:
+                        </span>
+                        <span className="font-bold text-stone-950">
+                          {finalEstimateString}
+                        </span>
                       </div>
                     </div>
 
                     <div className="p-3.5 bg-stone-100 rounded-2xl border border-stone-200 text-xs text-stone-600 text-center leading-relaxed">
-                      You can print your invoice immediately below. You can also view this verified pre-order under your <strong>Profile Screen</strong> Order History.
+                      You can print your invoice immediately below. You can also
+                      view this verified pre-order under your{" "}
+                      <strong>Profile Screen</strong> Order History.
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
@@ -787,7 +1281,7 @@ export default function CheckoutModal({
                   </div>
                 )}
 
-                {paymentStep === 'failed' && (
+                {paymentStep === "failed" && (
                   <div className="text-center py-8 space-y-6">
                     <div className="mx-auto w-14 h-14 bg-red-500/10 flex items-center justify-center rounded-full text-red-600 border border-red-200">
                       <X className="w-8 h-8" />
@@ -798,26 +1292,25 @@ export default function CheckoutModal({
                         Payment Refused
                       </h4>
                       <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                        The transaction could not be processed by our sandbox partner. Please retry with a valid card profile.
+                        The transaction could not be processed by our sandbox
+                        partner. Please retry with a valid card profile.
                       </p>
                     </div>
 
                     <button
-                      onClick={() => setPaymentStep('idle')}
+                      onClick={() => setPaymentStep("idle")}
                       className="w-full bg-stone-900 hover:bg-stone-800 text-white font-black uppercase tracking-wider text-xs py-3.5 rounded-xl transition-all shadow cursor-pointer"
                     >
                       Retry Transaction
                     </button>
                   </div>
                 )}
-
               </div>
             )}
           </div>
 
           {/* Right Panel: Pricing calculations & Sourced Items checklist (5 Columns) */}
           <div className="lg:col-span-5 space-y-6">
-            
             {/* Price details ledger card */}
             <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm space-y-4">
               <h2 className="text-xs font-black uppercase tracking-widest text-stone-400">
@@ -826,28 +1319,44 @@ export default function CheckoutModal({
 
               <div className="space-y-3 pt-2 text-xs">
                 <div className="flex justify-between text-stone-500">
-                  <span>Pre-Order Subtotal ({detailedItems.length} items)</span>
+                  <span>Order Subtotal ({detailedItems.length} items)</span>
                   <span className="font-bold text-stone-800">
-                    {currency === 'NGN' ? '₦' : '$'}{Math.round(subtotal).toLocaleString()}
+                    {currency === "NGN" ? "₦" : "$"}
+                    {Math.round(subtotal).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-stone-500">
-                  <span>Fulfillment Logistics ({deliveryMethod === 'pickup' ? 'Pickup Station' : 'Doorstep Courier'})</span>
-                  <span className={`font-bold ${deliveryFee === 0 ? 'text-emerald-600 uppercase text-[10px] bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded font-black' : 'text-stone-800'}`}>
-                    {deliveryFee === 0 ? 'Free' : (currency === 'NGN' ? `₦${deliveryFee.toLocaleString()}` : `$${deliveryFee}`)}
+                  <span>
+                    Fulfillment Logistics (
+                    {deliveryMethod === "pickup"
+                      ? "Pickup Station"
+                      : "Doorstep Courier"}
+                    )
+                  </span>
+                  <span
+                    className={`font-bold ${deliveryFee === 0 ? "text-emerald-600 uppercase text-[10px] bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded font-black" : "text-stone-800"}`}
+                  >
+                    {deliveryFee === 0
+                      ? "Free"
+                      : currency === "NGN"
+                        ? `₦${deliveryFee.toLocaleString()}`
+                        : `$${deliveryFee}`}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-xs text-stone-400">
                   <span>Consolidated Artisan Tariffs</span>
-                  <span className="text-emerald-600 font-bold uppercase tracking-wider">Free Sourcing</span>
+                  <span className="text-emerald-600 font-bold uppercase tracking-wider">
+                    Free Sourcing
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-sm text-stone-950 font-black pt-3 border-t border-stone-200">
                   <span>Amount Due Today</span>
                   <span className="font-serif text-base text-amber-900">
-                    {currency === 'NGN' ? '₦' : '$'}{Math.round(totalAmount).toLocaleString()}
+                    {currency === "NGN" ? "₦" : "$"}
+                    {Math.round(totalAmount).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -862,25 +1371,41 @@ export default function CheckoutModal({
               <div className="divide-y divide-stone-100 max-h-72 overflow-y-auto pr-1">
                 {detailedItems.map((item, idx) => {
                   let itemPrice = 0;
-                  if (item.product.currencyMode === 'NGN') {
-                    itemPrice = currency === 'NGN' ? item.product.priceNGN : item.product.priceNGN / conversionRate;
+                  if (item.product.currencyMode === "NGN") {
+                    itemPrice =
+                      currency === "NGN"
+                        ? item.product.priceNGN
+                        : item.product.priceNGN / conversionRate;
                   } else {
-                    itemPrice = currency === 'USD' ? item.product.priceUSD : item.product.priceUSD * conversionRate;
+                    itemPrice =
+                      currency === "USD"
+                        ? item.product.priceUSD
+                        : item.product.priceUSD * conversionRate;
                   }
                   return (
-                    <div key={idx} className="flex gap-3 py-3 items-start first:pt-0 last:pb-0">
-                      <img 
-                        src={item.product.images[0]} 
-                        alt={item.product.name} 
+                    <div
+                      key={idx}
+                      className="flex gap-3 py-3 items-start first:pt-0 last:pb-0"
+                    >
+                      <img
+                        src={item.product.images[0]}
+                        alt={item.product.name}
                         className="w-10 h-12 object-cover rounded-md border bg-stone-100"
                         referrerPolicy="no-referrer"
                       />
                       <div className="min-w-0 flex-1">
-                        <span className="font-bold text-xs text-stone-900 block truncate">{item.product.name}</span>
-                        <span className="text-[10px] text-stone-400 block font-mono">QTY: {item.quantity} • UNIT: {currency === 'NGN' ? '₦' : '$'}{Math.round(itemPrice).toLocaleString()}</span>
+                        <span className="font-bold text-xs text-stone-900 block truncate">
+                          {item.product.name}
+                        </span>
+                        <span className="text-[10px] text-stone-400 block font-mono">
+                          QTY: {item.quantity} • UNIT:{" "}
+                          {currency === "NGN" ? "₦" : "$"}
+                          {Math.round(itemPrice).toLocaleString()}
+                        </span>
                       </div>
                       <span className="font-mono text-xs font-black text-stone-950 text-right shrink-0">
-                        {currency === 'NGN' ? '₦' : '$'}{Math.round(itemPrice * item.quantity).toLocaleString()}
+                        {currency === "NGN" ? "₦" : "$"}
+                        {Math.round(itemPrice * item.quantity).toLocaleString()}
                       </span>
                     </div>
                   );
@@ -891,7 +1416,12 @@ export default function CheckoutModal({
               <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-600/20 flex gap-2.5 items-start text-left">
                 <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <div className="text-[10px] text-amber-900 leading-normal font-sans">
-                  Sourcing begins immediately. Handcrafted custom production completes inside <span className="font-bold underline">{finalEstimateString}</span>.
+                  Sourcing begins immediately. Handcrafted custom production
+                  completes inside{" "}
+                  <span className="font-bold underline">
+                    {finalEstimateString}
+                  </span>
+                  .
                 </div>
               </div>
             </div>
@@ -899,9 +1429,11 @@ export default function CheckoutModal({
             {/* Security banner */}
             <div className="p-4 bg-stone-100 rounded-2xl border border-stone-200/60 flex items-center gap-2.5 text-[10px] text-stone-500 leading-normal">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>Insured checkout allocation. All transaction proxy data is PCI-DSS authenticated.</span>
+              <span>
+                Insured checkout allocation. All transaction proxy data is
+                PCI-DSS authenticated.
+              </span>
             </div>
-
           </div>
         </div>
       </div>
@@ -911,32 +1443,54 @@ export default function CheckoutModal({
         <div className="hidden print:block p-12 bg-white text-stone-900 font-sans w-full max-w-4xl mx-auto">
           <div className="flex justify-between items-start border-b-2 border-stone-800 pb-6 mb-8">
             <div>
-              <span className="text-[10px] uppercase font-black tracking-widest text-stone-400 block font-mono">Bespoke Pre-Order Platform</span>
-              <h1 className="font-serif text-3xl font-black text-stone-900">OFFICIAL INVOICE</h1>
-              <span className="text-xs font-mono text-stone-500">Order Ref: {createdOrderRef.id}</span>
+              <span className="text-[10px] uppercase font-black tracking-widest text-stone-400 block font-mono">
+                Bespoke Order Platform
+              </span>
+              <h1 className="font-serif text-3xl font-black text-stone-900">
+                OFFICIAL INVOICE
+              </h1>
+              <span className="text-xs font-mono text-stone-500">
+                Order Ref: {createdOrderRef.id}
+              </span>
             </div>
             <div className="text-right">
-              <span className="block text-xs text-stone-500">Date Generated</span>
-              <span className="block text-sm font-bold font-mono">{new Date(createdOrderRef.createdAt).toLocaleDateString()}</span>
-              <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider rounded">Payment Verified</span>
+              <span className="block text-xs text-stone-500">
+                Date Generated
+              </span>
+              <span className="block text-sm font-bold font-mono">
+                {new Date(createdOrderRef.createdAt).toLocaleDateString()}
+              </span>
+              <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider rounded">
+                Payment Verified
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-8 mb-8 text-xs leading-relaxed">
             <div>
-              <h3 className="font-black uppercase tracking-wider text-stone-400 mb-2 font-mono text-[10px]">Customer Logistics</h3>
-              <p className="font-bold text-sm text-stone-950">{createdOrderRef.deliveryDetails.name}</p>
+              <h3 className="font-black uppercase tracking-wider text-stone-400 mb-2 font-mono text-[10px]">
+                Customer Logistics
+              </h3>
+              <p className="font-bold text-sm text-stone-950">
+                {createdOrderRef.deliveryDetails.name}
+              </p>
               <p>{createdOrderRef.deliveryDetails.phone}</p>
               <p>{createdOrderRef.deliveryDetails.email}</p>
             </div>
             <div>
-              <h3 className="font-black uppercase tracking-wider text-stone-400 mb-2 font-mono text-[10px]">Fulfillment Location</h3>
-              <p className="whitespace-pre-line text-stone-700">{createdOrderRef.deliveryDetails.address}</p>
+              <h3 className="font-black uppercase tracking-wider text-stone-400 mb-2 font-mono text-[10px]">
+                Fulfillment Location
+              </h3>
+              <p className="whitespace-pre-line text-stone-700">
+                {createdOrderRef.deliveryDetails.address}
+              </p>
             </div>
           </div>
 
           <div className="border-t border-stone-200 pt-6 mb-8">
-            <h3 className="font-black uppercase tracking-wider text-stone-400 mb-4 font-mono text-[10px]">Allocated Item Specifications</h3>
+            <h3 className="font-black uppercase tracking-wider text-stone-400 mb-4 font-mono text-[10px]">
+              Allocated Item Specifications
+            </h3>
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-stone-800 text-[10px] uppercase font-black tracking-wider text-stone-500">
@@ -949,17 +1503,34 @@ export default function CheckoutModal({
               <tbody>
                 {detailedItems.map((item: any, idx: number) => {
                   let itemPrice = 0;
-                  if (item.product.currencyMode === 'NGN') {
-                    itemPrice = currency === 'NGN' ? item.product.priceNGN : item.product.priceNGN / conversionRate;
+                  if (item.product.currencyMode === "NGN") {
+                    itemPrice =
+                      currency === "NGN"
+                        ? item.product.priceNGN
+                        : item.product.priceNGN / conversionRate;
                   } else {
-                    itemPrice = currency === 'USD' ? item.product.priceUSD : item.product.priceUSD * conversionRate;
+                    itemPrice =
+                      currency === "USD"
+                        ? item.product.priceUSD
+                        : item.product.priceUSD * conversionRate;
                   }
                   return (
-                    <tr key={idx} className="border-b border-stone-100 text-stone-700">
-                      <td className="py-3 font-medium font-serif text-stone-950">{item.product.name}</td>
+                    <tr
+                      key={idx}
+                      className="border-b border-stone-100 text-stone-700"
+                    >
+                      <td className="py-3 font-medium font-serif text-stone-950">
+                        {item.product.name}
+                      </td>
                       <td className="py-3 text-center">{item.quantity}</td>
-                      <td className="py-3 text-right font-mono">{currency === 'NGN' ? '₦' : '$'}{Math.round(itemPrice).toLocaleString()}</td>
-                      <td className="py-3 text-right font-bold font-mono text-stone-950">{currency === 'NGN' ? '₦' : '$'}{Math.round(itemPrice * item.quantity).toLocaleString()}</td>
+                      <td className="py-3 text-right font-mono">
+                        {currency === "NGN" ? "₦" : "$"}
+                        {Math.round(itemPrice).toLocaleString()}
+                      </td>
+                      <td className="py-3 text-right font-bold font-mono text-stone-950">
+                        {currency === "NGN" ? "₦" : "$"}
+                        {Math.round(itemPrice * item.quantity).toLocaleString()}
+                      </td>
                     </tr>
                   );
                 })}
@@ -971,23 +1542,40 @@ export default function CheckoutModal({
             <div className="w-64 text-right space-y-1.5 text-xs">
               <div className="flex justify-between text-stone-500">
                 <span>Subtotal</span>
-                <span className="font-mono font-bold">{currency === 'NGN' ? '₦' : '$'}{Math.round(subtotal).toLocaleString()}</span>
+                <span className="font-mono font-bold">
+                  {currency === "NGN" ? "₦" : "$"}
+                  {Math.round(subtotal).toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between text-stone-500">
-                <span>Fulfillment Courier ({createdOrderRef.deliveryDetails.deliveryMethod === 'pickup' ? 'Pickup' : 'Courier'})</span>
+                <span>
+                  Fulfillment Courier (
+                  {createdOrderRef.deliveryDetails.deliveryMethod === "pickup"
+                    ? "Pickup"
+                    : "Courier"}
+                  )
+                </span>
                 <span className="text-stone-900 font-bold">
-                  {deliveryFee === 0 ? 'FREE' : (currency === 'NGN' ? `₦${deliveryFee.toLocaleString()}` : `$${deliveryFee}`)}
+                  {deliveryFee === 0
+                    ? "FREE"
+                    : currency === "NGN"
+                      ? `₦${deliveryFee.toLocaleString()}`
+                      : `$${deliveryFee}`}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-black text-stone-950 pt-2 border-t border-stone-300">
                 <span>Amount Paid</span>
-                <span className="font-mono font-serif text-base">{currency === 'NGN' ? '₦' : '$'}{Math.round(totalAmount).toLocaleString()}</span>
+                <span className="font-mono font-serif text-base">
+                  {currency === "NGN" ? "₦" : "$"}
+                  {Math.round(totalAmount).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="mt-16 text-center border-t border-stone-200 pt-8 text-[10px] text-stone-400 font-mono tracking-wider">
-            Thank you for supporting handcrafted independent artisans. Delivery window: {finalEstimateString}.
+            Thank you for supporting handcrafted independent artisans. Delivery
+            window: {finalEstimateString}.
           </div>
         </div>
       )}

@@ -257,16 +257,16 @@ export default function Header({
               />
               <button
                 onClick={() => setCurrency('NGN')}
-                className={`relative z-10 w-1/2 text-center text-[10px] font-black transition-colors ${
-                  currency === 'NGN' ? 'text-stone-950' : 'text-stone-500'
+                className={`relative z-10 w-1/2 text-center text-[10px] font-black transition-colors duration-300 ease-in-out ${
+                  currency === 'NGN' ? 'text-stone-950' : 'text-stone-500 hover:text-stone-800'
                 }`}
               >
                 ₦
               </button>
               <button
                 onClick={() => setCurrency('USD')}
-                className={`relative z-10 w-1/2 text-center text-[10px] font-black transition-colors ${
-                  currency === 'USD' ? 'text-stone-950' : 'text-stone-500'
+                className={`relative z-10 w-1/2 text-center text-[10px] font-black transition-colors duration-300 ease-in-out ${
+                  currency === 'USD' ? 'text-stone-950' : 'text-stone-500 hover:text-stone-800'
                 }`}
               >
                 $

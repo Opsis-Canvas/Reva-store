@@ -21,16 +21,15 @@ import Onboarding from './components/Onboarding';
 import ProfileScreen from './components/ProfileScreen';
 import RefundPage from './components/RefundPage';
 import CompareModal from './components/CompareModal';
-import { Layers, Heart, Compass, Search, ShieldCheck, HelpCircle, Shirt, Baby, ShoppingBag, Home, ChevronDown, Flame, TrendingUp, AlertCircle, RefreshCw, ArrowRight, User, GitCompare, BellRing, Sparkles, X } from 'lucide-react';
+import { Layers, Heart, Compass, Search, ShieldCheck, HelpCircle, Shirt, Baby, ShoppingBag, Home, ChevronDown, Flame, TrendingUp, AlertCircle, RefreshCw, ArrowRight, User, GitCompare, BellRing, Sparkles, X, Share2 } from 'lucide-react';
 
 export default function App() {
   // Navigation & View controllers
   const [isControlPath, setIsControlPath] = useState(
-  window.location.pathname.endsWith('/control') ||
-  window.location.hash === '#control' ||
-  window.location.search.includes('admin=true')
-);
-
+    window.location.pathname === '/control' || 
+    window.location.hash === '#control' || 
+    window.location.search.includes('admin=true')
+  );
   
   const [activeView, setActiveView] = useState<'landing' | 'catalog' | 'favorites' | 'lookup' | 'profile' | 'refund'>('landing');
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
@@ -74,10 +73,14 @@ export default function App() {
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Catalog sorting & notification states
+  // Catalog sorting, filter tiers, and notification states
   const [sortBy, setSortBy] = useState<'newest' | 'price_asc' | 'price_desc'>('newest');
+  const [selectedPriceTier, setSelectedPriceTier] = useState<'All' | 'High' | 'Medium' | 'Low' | 'Ultra-Low'>('All');
+  const [priceMin, setPriceMin] = useState<number>(0);
+  const [priceMax, setPriceMax] = useState<number>(1000000);
   const [notificationItems, setNotificationItems] = useState<any[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(8);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   // Onboarding status check on mount
   useEffect(() => {
@@ -87,10 +90,21 @@ export default function App() {
     }
   }, []);
 
-  // Reset visible item count when filter category or query changes
+  // Update slider default ranges when currency changes
+  useEffect(() => {
+    if (currency === 'NGN') {
+      setPriceMin(0);
+      setPriceMax(1000000);
+    } else {
+      setPriceMin(0);
+      setPriceMax(1000);
+    }
+  }, [currency]);
+
+  // Reset visible item count when filter category, query, or price options change
   useEffect(() => {
     setVisibleCount(8);
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, selectedPriceTier, priceMin, priceMax]);
 
   // 1. Listen for isolated route paths (/control or #control)
   useEffect(() => {
@@ -241,6 +255,54 @@ export default function App() {
       if (unsubscribeOrders) unsubscribeOrders();
     };
   }, []);
+
+  // Handle shared link lookups on startup
+  const hasLoadedShareRef = useRef(false);
+  useEffect(() => {
+    if (!customerSessionId || hasLoadedShareRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get('share');
+    if (shareId) {
+      hasLoadedShareRef.current = true;
+      const loadSharedSnapshot = async () => {
+        try {
+          const shareDoc = await getDoc(doc(db, 'shares', shareId));
+          if (shareDoc.exists()) {
+            const data = shareDoc.data();
+            if (data.type === 'favorites') {
+              setFavoritesItems(data.items || []);
+              setActiveView('favorites');
+              // Save to Firestore under user's actual favorites collection for persistent sync
+              await setDoc(doc(db, 'favorites', customerSessionId), {
+                items: data.items || [],
+                updatedAt: Date.now()
+              });
+              alert("Shared Wishlist loaded successfully!");
+            } else if (data.type === 'cart') {
+              setCartItems(data.items || []);
+              setIsCartOpen(true);
+              // Save to Firestore under user's actual carts collection for persistent sync
+              await setDoc(doc(db, 'carts', customerSessionId), {
+                items: data.items || [],
+                updatedAt: Date.now()
+              });
+              alert("Shared Order Bag loaded successfully!");
+            }
+            // Clean up share parameter from URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('share');
+            window.history.replaceState({}, '', url.toString());
+          } else {
+            console.error("Shared link not found or expired.");
+          }
+        } catch (err) {
+          console.error("Failed to load shared configuration:", err);
+        }
+      };
+      loadSharedSnapshot();
+    }
+  }, [customerSessionId]);
 
   // 3. Dynamic Products & Rate Sync + Auto-Seeding with Offline-First Local Cache
   useEffect(() => {
@@ -549,6 +611,50 @@ export default function App() {
     }
   };
 
+  const handleShareCart = async () => {
+    if (cartItems.length === 0) {
+      alert("Your order bag is empty.");
+      return;
+    }
+    try {
+      const shareId = `share-cart-${Math.random().toString(36).substring(2, 11)}`;
+      await setDoc(doc(db, 'shares', shareId), {
+        id: shareId,
+        type: 'cart',
+        items: cartItems,
+        createdAt: Date.now()
+      });
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Curated order bag shareable link copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to create shared link:", err);
+      alert("Failed to share curated order bag.");
+    }
+  };
+
+  const handleShareFavorites = async () => {
+    if (favoritesItems.length === 0) {
+      alert("Your wishlist is empty.");
+      return;
+    }
+    try {
+      const shareId = `share-fav-${Math.random().toString(36).substring(2, 11)}`;
+      await setDoc(doc(db, 'shares', shareId), {
+        id: shareId,
+        type: 'favorites',
+        items: favoritesItems,
+        createdAt: Date.now()
+      });
+      const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Wishlist shareable link copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to create shared link:", err);
+      alert("Failed to share wishlist.");
+    }
+  };
+
   const handleQuickReorder = async (items: { productId: string; quantity: number }[]) => {
     if (!customerSessionId) return;
     triggerHapticFeedback();
@@ -601,15 +707,7 @@ export default function App() {
     }, 750);
   };
 
-  // Filter and search catalog items
-  const filteredProducts = products.filter(prod => {
-    const matchesCategory = selectedCategory === 'All Allocations' || prod.category === selectedCategory;
-    const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          prod.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  // Sort catalog items
+  // Helper to get active currency price of a product
   const getProductPrice = (prod: Product) => {
     if (prod.currencyMode === 'NGN') {
       return currency === 'NGN' ? prod.priceNGN : prod.priceNGN / conversionRate;
@@ -618,6 +716,40 @@ export default function App() {
     }
   };
 
+  // Filter and search catalog items
+  const filteredProducts = products.filter(prod => {
+    const matchesCategory = selectedCategory === 'All Allocations' || prod.category === selectedCategory;
+    const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          prod.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Get item price in display currency
+    const price = getProductPrice(prod);
+
+    // Apply Price Tier filter
+    let matchesTier = true;
+    if (selectedPriceTier !== 'All') {
+      const highLimit = currency === 'NGN' ? 100000 : 100;
+      const medLimit = currency === 'NGN' ? 40000 : 40;
+      const lowLimit = currency === 'NGN' ? 10000 : 10;
+
+      if (selectedPriceTier === 'High') {
+        matchesTier = price >= highLimit;
+      } else if (selectedPriceTier === 'Medium') {
+        matchesTier = price >= medLimit && price < highLimit;
+      } else if (selectedPriceTier === 'Low') {
+        matchesTier = price >= lowLimit && price < medLimit;
+      } else if (selectedPriceTier === 'Ultra-Low') {
+        matchesTier = price < lowLimit;
+      }
+    }
+
+    // Apply custom dual-input price range filter
+    const matchesSlider = price >= priceMin && price <= priceMax;
+
+    return matchesCategory && matchesSearch && matchesTier && matchesSlider;
+  });
+
+  // Sort catalog items
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === 'price_asc') {
       return getProductPrice(a) - getProductPrice(b);
@@ -651,7 +783,7 @@ export default function App() {
         observer.unobserve(currentRef);
       }
     };
-  }, [sortedProducts.length, visibleCount]);
+  }, [sortedProducts.length, visibleCount, activeView, isProductsLoading]);
 
   // --- ADMIN PORTAL WORKSPACE ISOLATION ---
   if (isControlPath) {
@@ -1046,8 +1178,221 @@ export default function App() {
                     />
                     <Search className="absolute right-3.5 top-3.5 w-3.5 h-3.5 text-stone-400" />
                   </div>
+
+                  {/* Refined Filters Sleek Dropdown Toggle Button */}
+                  <button
+                    onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-xs font-bold transition-all select-none shadow-sm cursor-pointer ${
+                      isFilterDropdownOpen
+                        ? 'bg-amber-500 border-amber-600 text-white'
+                        : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span>Filters &amp; Sorting</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
                 </div>
               </div>
+
+              {/* Premium Refined Sourcing Filter Workspace */}
+              {isFilterDropdownOpen && (
+                <div className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-6 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-fade-in mb-6">
+                  
+                  {/* Col 1: Preset Price Tiers (Span 5) */}
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-stone-500" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-stone-850">Preset Price Tiers</span>
+                      {/* Tooltip Icon with Help info */}
+                      <div className="group relative cursor-pointer">
+                        <HelpCircle className="w-3.5 h-3.5 text-stone-400 hover:text-stone-600 transition-colors" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-stone-900 text-stone-100 text-[10px] p-2.5 rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-30 leading-relaxed text-left">
+                          Pre-segmented premium price classes. Tap any tier to quickly lock catalog to that tier's standard range.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 xs:grid-cols-5 gap-2">
+                      {[
+                        { id: 'All', label: 'All', range: 'Any Price' },
+                        { id: 'High', label: 'High', range: currency === 'NGN' ? '≥ ₦100k' : '≥ $100' },
+                        { id: 'Medium', label: 'Medium', range: currency === 'NGN' ? '₦40k-100k' : '$40-100' },
+                        { id: 'Low', label: 'Low', range: currency === 'NGN' ? '₦10k-40k' : '$10-40' },
+                        { id: 'Ultra-Low', label: 'Ultra-Low', range: currency === 'NGN' ? '< ₦10k' : '< $10' }
+                      ].map(tier => (
+                        <button
+                          key={tier.id}
+                          onClick={() => {
+                            setSelectedPriceTier(tier.id as any);
+                            const highLimit = currency === 'NGN' ? 100000 : 100;
+                            const medLimit = currency === 'NGN' ? 40000 : 40;
+                            const lowLimit = currency === 'NGN' ? 10000 : 10;
+                            const maxLimit = currency === 'NGN' ? 1000000 : 1000;
+
+                            if (tier.id === 'All') {
+                              setPriceMin(0);
+                              setPriceMax(maxLimit);
+                            } else if (tier.id === 'High') {
+                              setPriceMin(highLimit);
+                              setPriceMax(maxLimit);
+                            } else if (tier.id === 'Medium') {
+                              setPriceMin(medLimit);
+                              setPriceMax(highLimit);
+                            } else if (tier.id === 'Low') {
+                              setPriceMin(lowLimit);
+                              setPriceMax(medLimit);
+                            } else if (tier.id === 'Ultra-Low') {
+                              setPriceMin(0);
+                              setPriceMax(lowLimit);
+                            }
+                          }}
+                          className={`px-2 py-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 select-none ${
+                            selectedPriceTier === tier.id
+                              ? 'bg-amber-500/10 border-amber-600 text-amber-950 font-black scale-[1.02]'
+                              : 'bg-stone-50 border-stone-250 text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                          }`}
+                        >
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide">{tier.label}</span>
+                          <span className="text-[8px] font-mono text-stone-400 font-bold block whitespace-nowrap">{tier.range}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Col 2: Interactive Dual-Input Price Slider (Span 4) */}
+                  <div className="lg:col-span-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Compass className="w-3.5 h-3.5 text-stone-500" />
+                        <span className="text-[11px] font-black uppercase tracking-wider text-stone-850">Custom Price Range</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold text-amber-850 bg-amber-500/5 px-2 py-0.5 rounded-md border border-amber-600/10 uppercase">
+                        Slider Active
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* The Sliders */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Min Slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Min Price</span>
+                            <span className="text-[10px] font-mono font-black text-stone-800">
+                              {currency === 'NGN' ? '₦' : '$'}{priceMin.toLocaleString()}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max={currency === 'NGN' ? '500000' : '500'}
+                            step={currency === 'NGN' ? '5000' : '5'}
+                            value={priceMin}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setPriceMin(val);
+                              if (val > priceMax) setPriceMax(val);
+                              setSelectedPriceTier('All');
+                            }}
+                            className="w-full accent-amber-600 cursor-pointer h-1 bg-stone-200 rounded-lg appearance-none"
+                          />
+                        </div>
+
+                        {/* Max Slider */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Max Price</span>
+                            <span className="text-[10px] font-mono font-black text-stone-800">
+                              {currency === 'NGN' ? '₦' : '$'}{priceMax.toLocaleString()}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max={currency === 'NGN' ? '1000000' : '1000'}
+                            step={currency === 'NGN' ? '5000' : '5'}
+                            value={priceMax}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setPriceMax(val);
+                              if (val < priceMin) setPriceMin(val);
+                              setSelectedPriceTier('All');
+                            }}
+                            className="w-full accent-amber-600 cursor-pointer h-1 bg-stone-200 rounded-lg appearance-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Numeric Input overrides */}
+                      <div className="flex items-center gap-2.5">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-2 text-[10px] text-stone-400 font-bold uppercase">{currency === 'NGN' ? '₦' : '$'}</span>
+                          <input
+                            type="number"
+                            value={priceMin}
+                            onChange={(e) => {
+                              setPriceMin(Math.max(0, Number(e.target.value)));
+                              setSelectedPriceTier('All');
+                            }}
+                            className="w-full bg-stone-50 border border-stone-200 rounded-xl py-1.5 pl-6 pr-2 text-xs font-semibold text-stone-800 focus:outline-none focus:border-stone-400"
+                            placeholder="Min"
+                          />
+                        </div>
+                        <span className="text-[9px] text-stone-400 font-bold uppercase">TO</span>
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-2 text-[10px] text-stone-400 font-bold uppercase">{currency === 'NGN' ? '₦' : '$'}</span>
+                          <input
+                            type="number"
+                            value={priceMax}
+                            onChange={(e) => {
+                              setPriceMax(Math.max(0, Number(e.target.value)));
+                              setSelectedPriceTier('All');
+                            }}
+                            className="w-full bg-stone-50 border border-stone-200 rounded-xl py-1.5 pl-6 pr-2 text-xs font-semibold text-stone-800 focus:outline-none focus:border-stone-400"
+                            placeholder="Max"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Col 3: Sorting Options with Explanations (Span 3) */}
+                  <div className="lg:col-span-3 space-y-3">
+                    <div className="flex items-center gap-1.5">
+                      <Compass className="w-3.5 h-3.5 text-stone-500" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-stone-850">Sort Ordering</span>
+                      {/* Tooltip Icon with Sorting info */}
+                      <div className="group relative cursor-pointer">
+                        <HelpCircle className="w-3.5 h-3.5 text-stone-400 hover:text-stone-600 transition-colors" />
+                        <div className="absolute bottom-full right-0 mb-2 w-52 bg-stone-900 text-stone-100 text-[10px] p-2.5 rounded-xl shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-30 leading-relaxed text-left">
+                          Control how the customized catalog elements are sequenced for display.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative space-y-1.5">
+                      <select
+                        value={sortBy}
+                        onChange={(e: any) => setSortBy(e.target.value)}
+                        className="w-full bg-stone-50 border border-stone-250 rounded-2xl py-3 px-4 text-xs font-semibold text-stone-800 focus:outline-none focus:border-stone-400 transition-all cursor-pointer shadow-3xs"
+                      >
+                        <option value="newest">Newest Batches</option>
+                        <option value="price_asc">Price: Low to High</option>
+                        <option value="price_desc">Price: High to Low</option>
+                      </select>
+
+                      <div className="p-2.5 bg-stone-50 rounded-xl border border-stone-200/60">
+                        <span className="text-[9px] text-stone-500 leading-normal block font-sans text-left">
+                          {sortBy === 'newest' && '⚡ Displaying the latest releases and restocks first.'}
+                          {sortBy === 'price_asc' && '📈 Sequenced from most accessible to highest luxury premium.'}
+                          {sortBy === 'price_desc' && '💎 Displaying top high-end collections first.'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
               {/* Grid Catalog Cards */}
               <div className="space-y-4">
@@ -1153,11 +1498,22 @@ export default function App() {
         {/* Saved Wishlist View */}
         {activeView === 'favorites' && (
           <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-8 min-h-[60vh]">
-            <div className="text-center space-y-2">
-              <h2 className="font-serif text-3xl font-bold tracking-tight text-stone-900">Your Saved Wishlist</h2>
+            <div className="text-center space-y-4">
+              <h2 className="font-serif text-3xl font-bold tracking-tight text-stone-900 font-medium">Your Saved Wishlist</h2>
               <p className="text-sm text-stone-500 max-w-sm mx-auto">
                 Review your customized configured selections before locking down pre-order quantities.
               </p>
+              {favoritesItems.length > 0 && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleShareFavorites}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-stone-250 bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 text-xs font-bold transition-all shadow-3xs cursor-pointer"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-stone-500" />
+                    Share Wishlist Link
+                  </button>
+                </div>
+              )}
             </div>
 
             {favoritesItems.length === 0 ? (
@@ -1310,6 +1666,7 @@ export default function App() {
           setIsCartOpen(false);
           setIsCheckoutOpen(true);
         }}
+        onShareCart={handleShareCart}
       />
 
       {/* Checkout Payment Dialog */}

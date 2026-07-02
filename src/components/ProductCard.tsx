@@ -143,15 +143,14 @@ export default function ProductCard({
 
       {/* Product Metadata & Content Info */}
       <div className="flex flex-col flex-1 p-3 sm:p-5 space-y-1 sm:space-y-2">
-        <div className="flex items-start justify-between gap-1">
+        <div className="flex items-center justify-between gap-1 flex-wrap">
           <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400">
             {product.category}
           </span>
-          {product.currencyMode === 'USD' && (
-            <span className="text-[7px] sm:text-[8px] px-1.5 py-0.5 rounded bg-stone-50 text-stone-500 font-bold border border-stone-200 uppercase tracking-wider font-mono">
-              USD
-            </span>
-          )}
+          <span className="text-[8.5px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-950 bg-amber-500/10 border border-amber-600/30 px-2.5 py-1 rounded-md flex items-center gap-1.5 shrink-0 shadow-2xs">
+            <span className="w-1.5 h-1.5 bg-amber-600 rounded-full animate-pulse" />
+            Sourced from: {product.originCountry || product.origin || 'China'}
+          </span>
         </div>
 
         {/* Inline stock warning with a pulsing indicator */}

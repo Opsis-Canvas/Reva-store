@@ -110,6 +110,17 @@
         "updatedAt": { "type": "number" }
       }
     },
+    "User": {
+      "title": "User",
+      "description": "Registered user emails for transactional routing.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["email", "updatedAt"]
+    },
     "RateLimit": {
       "title": "RateLimit",
       "description": "Client session request tracking ledger for rate-limiting orders and notifications.",
@@ -145,9 +156,25 @@
         "createdAt": { "type": "number" }
       },
       "required": ["id", "productId", "orderId", "customerSessionId", "customerName", "rating", "comment", "createdAt"]
+    },
+    "Share": {
+      "title": "Share",
+      "description": "Unique shared wishlist or cart configuration snapshot.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["cart", "favorites"] },
+        "items": { "type": "array" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "type", "items", "createdAt"]
     }
   },
   "firestore": {
+    "/shares/{shareId}": {
+      "schema": { "$ref": "#/entities/Share" },
+      "description": "Unique shared product configurations snapshot lookups."
+    },
     "/products/{productId}": {
       "schema": { "$ref": "#/entities/Product" },
       "description": "Crafted pre-order product catalog collection."
@@ -179,6 +206,10 @@
     "/profiles/{customerSessionId}": {
       "schema": { "$ref": "#/entities/Profile" },
       "description": "Sizing profiles keyed by session UID."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Registered user emails for transactional routing."
     },
     "/rate_limits/{customerSessionId}": {
       "schema": { "$ref": "#/entities/RateLimit" },

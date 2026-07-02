@@ -198,10 +198,10 @@ export default function OrderLookup({ customerSessionId }: OrderLookupProps) {
   // Render a progress bar/milestone tracker
   const renderFulfillmentMilestones = (status: string) => {
     const milestones = [
-      { id: 'pending', name: 'Allocation Funded' },
-      { id: 'processing', name: 'Artisan Sourcing' },
-      { id: 'ready', name: 'Custom Crafting' },
-      { id: 'shipped', name: 'Courier Handover' },
+      { id: 'received', name: 'Received' },
+      { id: 'processing', name: 'Processing' },
+      { id: 'ready', name: 'Ready for Dispatch' },
+      { id: 'shipped', name: 'Shipped' },
       { id: 'fulfilled', name: 'Delivered' }
     ];
 
@@ -210,7 +210,7 @@ export default function OrderLookup({ customerSessionId }: OrderLookupProps) {
       if (current === 'ready') return 2;
       if (current === 'shipped') return 3;
       if (current === 'fulfilled') return 4;
-      return 0; // pending
+      return 0; // received / pending
     };
 
     const activeIdx = getStatusIndex(status);
@@ -218,9 +218,9 @@ export default function OrderLookup({ customerSessionId }: OrderLookupProps) {
     return (
       <div className="space-y-4 pt-5 border-t border-stone-100">
         <span className="block text-[10px] font-black uppercase tracking-wider text-stone-400">
-          Pre-Order Fulfillment Timeline
+          Order Fulfillment Progress
         </span>
-        <div className="grid grid-cols-5 gap-1 relative">
+        <div className="grid grid-cols-5 gap-1 relative select-none">
           {milestones.map((m, idx) => {
             const isCompleted = idx <= activeIdx;
             const isCurrent = idx === activeIdx;
@@ -229,16 +229,24 @@ export default function OrderLookup({ customerSessionId }: OrderLookupProps) {
               <div key={m.id} className="flex flex-col items-center text-center space-y-2 relative">
                 {/* Connecting Line */}
                 {idx < milestones.length - 1 && (
-                  <div className={`absolute top-2.5 left-[50%] right-[-50%] h-[2px] z-0 ${idx < activeIdx ? 'bg-amber-600' : 'bg-stone-200'}`} />
+                  <div className={`absolute top-2.5 left-[50%] right-[-50%] h-[2.5px] z-0 transition-all duration-500 ${idx < activeIdx ? 'bg-gradient-to-r from-amber-500 to-amber-600' : 'bg-stone-200'}`} />
                 )}
-                <div className="relative z-10 bg-white p-0.5 rounded-full">
-                  {isCompleted ? (
-                    <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
+                <div className="relative z-10 bg-white p-0.5 rounded-full transition-transform duration-300">
+                  {isCurrent ? (
+                    <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center text-white ring-4 ring-amber-500/30 animate-pulse">
+                      <CheckCircle2 className="w-4.5 h-4.5" />
+                    </div>
+                  ) : isCompleted ? (
+                    <div className="w-5 h-5 rounded-full bg-amber-600 flex items-center justify-center text-white">
+                      <CheckCircle2 className="w-4.5 h-4.5" />
+                    </div>
                   ) : (
-                    <Circle className="w-5 h-5 text-stone-300 shrink-0" />
+                    <div className="w-5 h-5 rounded-full bg-stone-100 border border-stone-300 flex items-center justify-center text-stone-400">
+                      <Circle className="w-3.5 h-3.5" />
+                    </div>
                   )}
                 </div>
-                <span className={`text-[9px] font-bold leading-tight px-1 transition-all ${isCurrent ? 'text-amber-700 font-black' : isCompleted ? 'text-stone-800' : 'text-stone-400'}`}>
+                <span className={`text-[9.5px] font-bold leading-tight px-0.5 transition-all duration-300 ${isCurrent ? 'text-amber-700 font-extrabold scale-105' : isCompleted ? 'text-stone-800' : 'text-stone-400 font-medium'}`}>
                   {m.name}
                 </span>
               </div>

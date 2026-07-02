@@ -104,8 +104,7 @@ export default function ProductDetailModal({
     const reviewsRef = collection(db, 'reviews');
     const q = query(
       reviewsRef,
-      where('productId', '==', product.id),
-      orderBy('createdAt', 'desc')
+      where('productId', '==', product.id)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -113,6 +112,8 @@ export default function ProductDetailModal({
       snapshot.forEach((docSnap) => {
         items.push({ id: docSnap.id, ...docSnap.data() } as Review);
       });
+      // Sort in-memory descending by createdAt to avoid composite index error
+      items.sort((a, b) => b.createdAt - a.createdAt);
       setReviews(items);
     }, (err) => {
       console.error('Error fetching reviews:', err);
@@ -449,11 +450,17 @@ export default function ProductDetailModal({
             <div className="space-y-4">
               
               {/* Category tag and status */}
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black tracking-widest text-stone-400 uppercase flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-stone-400" />
-                  {product.category}
-                </span>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black tracking-widest text-stone-400 uppercase flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-stone-400" />
+                    {product.category}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-600/20 flex items-center gap-1 shrink-0">
+                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                    Sourced from: {product.originCountry || product.origin || 'China'}
+                  </span>
+                </div>
                 <span className="flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-700 font-extrabold bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/50 uppercase tracking-wider">
                   <Clock className="w-3.5 h-3.5" />
                   Custom Handcrafted
@@ -515,7 +522,7 @@ export default function ProductDetailModal({
                 </div>
                 <div className="flex items-center gap-1.5 bg-stone-50 p-2 rounded-xl border border-stone-100 col-span-2">
                   <span className="text-[9px] uppercase font-mono tracking-widest text-stone-400">Sourced From:</span>
-                  <span className="text-amber-800 font-black uppercase tracking-wider">{product.origin || 'Overseas'}</span>
+                  <span className="text-amber-950 font-black uppercase tracking-wider">{product.originCountry || product.origin || 'China'}</span>
                 </div>
               </div>
 

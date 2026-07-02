@@ -123,6 +123,13 @@ export default function ProfileScreen({
           updatedAt: Date.now()
         }, { merge: true });
 
+        // Save email directly to the user's document inside the users collection in Firestore
+        await setDoc(doc(db, 'users', customerSessionId), {
+          email,
+          name,
+          updatedAt: Date.now()
+        }, { merge: true });
+
         // Backup in localStorage
         localStorage.setItem('preorder_checkout_name', name);
         localStorage.setItem('preorder_checkout_email', email);

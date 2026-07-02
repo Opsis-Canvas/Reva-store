@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { 
   X, Trash2, ArrowRight, Clock, ShoppingBag, 
-  List, LayoutGrid, Grid3X3, Minus, Plus 
+  List, LayoutGrid, Grid3X3, Minus, Plus, Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product, CartItem } from '../types';
@@ -22,6 +22,7 @@ interface CartDrawerProps {
   onUpdateQty: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onProceedToCheckout: () => void;
+  onShareCart?: () => void;
 }
 
 function getMaxDeliveryDays(deliveryString: string): number {
@@ -39,7 +40,8 @@ export default function CartDrawer({
   conversionRate,
   onUpdateQty,
   onRemoveItem,
-  onProceedToCheckout
+  onProceedToCheckout,
+  onShareCart
 }: CartDrawerProps) {
   // Layout Modes: 'list' | 'grid2' | 'grid3'
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid2' | 'grid3'>('list');
@@ -376,6 +378,17 @@ export default function CartDrawer({
                   Proceed to Secure Checkout
                   <ArrowRight className="w-4 h-4 text-amber-400 animate-pulse" />
                 </button>
+
+                {/* Share Bag Link */}
+                {onShareCart && (
+                  <button
+                    onClick={onShareCart}
+                    className="w-full py-3 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 hover:text-stone-900 font-bold text-xs uppercase rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-3xs"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-stone-500" />
+                    Share Curated Bag Link
+                  </button>
+                )}
               </div>
 
             </div>
